@@ -6,7 +6,6 @@ import com.finance.runwayd.core.FinanceService;
 import com.finance.runwayd.core.forecast.Forecast;
 import com.finance.runwayd.core.forecast.LedgerEntry;
 import com.finance.runwayd.core.model.Account;
-import com.finance.runwayd.desktop.ui.Alerts;
 import com.finance.runwayd.desktop.ui.Charts;
 import com.finance.runwayd.desktop.ui.Format;
 import com.finance.runwayd.desktop.Refreshable;
@@ -22,7 +21,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
-import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableCell;
@@ -244,10 +242,8 @@ public final class ForecastView extends ScrollPane implements Refreshable {
     }
 
     /**
-     * The tick box column. Ticked means you marked it paid; untick it to put it back. A bill from
-     * before your last balance update has no tick (nobody paid it here): it shows "in bank?",
-     * because the app assumes it already came out of that balance. If it hasn't, clicking that
-     * counts it again.
+     * The tick box column. A box is ticked only when you tick it: that bill is paid and stops counting.
+     * Untick it to put it back. Nothing ticks a box for you, not even a balance update.
      */
     private TableColumn<ChecklistItem, ChecklistItem> paidColumn() {
         TableColumn<ChecklistItem, ChecklistItem> column = new TableColumn<>("Paid");
@@ -256,7 +252,6 @@ public final class ForecastView extends ScrollPane implements Refreshable {
         column.setCellValueFactory(cell -> new ReadOnlyObjectWrapper<>(cell.getValue()));
         column.setCellFactory(col -> new TableCell<>() {
             private final CheckBox box = new CheckBox();
-            private final Hyperlink inBank = new Hyperlink("in bank?");
 
             {
                 box.setOnAction(event -> {
@@ -271,12 +266,6 @@ public final class ForecastView extends ScrollPane implements Refreshable {
                         Platform.runLater(ForecastView.this::refresh);
                     }
                 });
-                inBank.setOnAction(event -> {
-                    ChecklistItem entry = getItem();
-                    if (entry != null && !entry.isBudgetSplit()) {
-                        askStillToCome(entry);
-                    }
-                });
             }
 
             @Override
@@ -285,37 +274,12 @@ public final class ForecastView extends ScrollPane implements Refreshable {
                 if (empty || entry == null) {
                     setGraphic(null);
                 } else {
-                    if (entry.status() == ChecklistItem.Status.CLEARED) {
-                        // Not ticked: nobody marked it paid. It's before the last balance update.
-                        inBank.setTooltip(new Tooltip("Before your last balance update, so it's assumed to be "
-                                + "in that balance already. Click if it hasn't actually gone through yet."));
-                        setGraphic(inBank);
-                    } else {
-                        box.setSelected(entry.isDone());
-                        setGraphic(box);
-                    }
+                    box.setSelected(entry.isDone());
+                    setGraphic(box);
                 }
             }
         });
         return column;
-    }
-
-    /**
-     * For an "in bank?" row: explains why it isn't counted, and if it hasn't gone through yet,
-     * adds it back as a one-time bill (see Bills.stillToCome in core).
-     */
-    private void askStillToCome(ChecklistItem entry) {
-        String account = service.findAccount(entry.item().mainAccountId()).map(Account::name).orElse("the account");
-        LocalDate balanceDate = service.findAccount(entry.item().mainAccountId()).map(Account::balanceDate).orElse(null);
-        boolean notYet = Alerts.confirm(entry.item().name() + " on " + Format.date(entry.date()) + " is from before your "
-                + "last " + account + " balance update" + (balanceDate == null ? "" : " (" + Format.date(balanceDate) + ")")
-                + ", so runwayd assumes it already came out of that balance. That's why it isn't ticked "
-                + "and doesn't count in the forecast.\n\nHasn't it gone through yet? Click OK to count it again: "
-                + "it's added as a one-time bill you can tick off once it clears.");
-        if (notYet) {
-            service.stillToCome(entry.item().id(), entry.date());
-            Platform.runLater(this::refresh);
-        }
     }
 
     /** A bold title above some content. */

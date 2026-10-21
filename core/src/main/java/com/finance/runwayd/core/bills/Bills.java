@@ -4,17 +4,13 @@ import com.finance.runwayd.core.Workspace;
 import com.finance.runwayd.core.forecast.Forecasts;
 import com.finance.runwayd.core.forecast.ScheduleCalculator;
 import com.finance.runwayd.core.model.Account;
-import com.finance.runwayd.core.model.Frequency;
-import com.finance.runwayd.core.model.PaymentRule;
 import com.finance.runwayd.core.model.ScheduledItem;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -228,37 +224,6 @@ public final class Bills {
         workspace.save();
         return Optional.of(unpaid);
     }
-
-    /**
-     * "This hasn't actually gone through yet": for a bill dated before its account's last balance
-     * update. The app assumes those are already in that balance (they show as "In balance" on the
-     * checklist), which is wrong if the bank hasn't taken it yet. This adds a one-time copy, e.g.
-     * "School Lunch (from Oct 18)", due on the balance date, so the forecast counts it again until
-     * you tick it off. Asking twice for the same date doesn't add it twice.
-     *
-     * @return the one-time copy
-     * @throws IllegalArgumentException if {@code date} isn't before the account's balance date
-     */
-    public ScheduledItem stillToCome(int itemId, LocalDate date) {
-        ScheduledItem item = workspace.items().get(workspace.indexOfItem(itemId));
-        LocalDate balanceDate = workspace.findAccount(item.mainAccountId()).map(Account::balanceDate)
-                .orElseThrow(() -> new IllegalArgumentException("That bill's account doesn't exist."));
-        if (!date.isBefore(balanceDate)) {
-            throw new IllegalArgumentException(item.name() + " on " + date + " still counts already; "
-                    + "only bills from before the last balance update are assumed to be in the bank.");
-        }
-        String name = item.name() + " (from " + date.format(SHORT_DATE) + ")";
-        Optional<ScheduledItem> already = workspace.items().stream()
-                .filter(existing -> existing.frequency() == Frequency.ONCE && existing.name().equals(name))
-                .findFirst();
-        if (already.isPresent()) {
-            return already.get();
-        }
-        return add(new ScheduledItem(0, name, item.category(), amountEachTime(item), PaymentRule.FIXED,
-                Frequency.ONCE, balanceDate, null, item.fromAccountId(), item.toAccountId(), null));
-    }
-
-    private static final DateTimeFormatter SHORT_DATE = DateTimeFormatter.ofPattern("MMM d", Locale.US);
 
     /** The occurrence just before {@code date}, or null if there isn't one in the last two years. */
     private static LocalDate previousDate(ScheduledItem item, LocalDate date) {

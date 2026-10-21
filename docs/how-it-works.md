@@ -46,7 +46,7 @@ Mistakes are easy to take back:
 - A bill marked paid **ahead** (its paid date is still in the future) shows a small **Undo** button next to Mark paid. Each click un-marks the latest date, so four clicks too many take four Undos. Right-click → **Undo last mark paid** does the same.
 - Marking something that's a month or more away asks first ("Next date is Feb 15, 2027, about 4 months from now…"), so extra clicks can't quietly skip months of bills or paychecks.
 
-A balance you enter counts everything due **before** its date. Bills due **on** that day (e.g. today) still count until you tick them off, since they may not have cleared yet. Bills due before your last balance update aren't ticked (nobody paid them in the app): they show **in bank?** and the status **In balance**, because that balance already includes them. If one hasn't actually gone through yet, click **in bank?** to count it again: it's added as a one-time bill (e.g. "School Lunch (from Oct 18)") due on the balance date, which you tick off once it clears.
+A balance you enter counts everything due **before** its date. Bills due **on** that day (e.g. today) still count until you tick them off, since they may not have cleared yet. **A box is only ever ticked by you.** Tick a bill when it's paid and it's removed from every calculation; untick it to put it back. Ticked bills from earlier months drop off the list. Bills due before your last balance update stay unticked (status "Before balance update") until you tick them, but the forecast doesn't subtract them again, because the balance you typed in already includes them.
 
 No payment history is kept. Each bill only remembers a `paidThrough` date. Balances aren't changed either, since you update those yourself from your bank.
 

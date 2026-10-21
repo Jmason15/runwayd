@@ -77,13 +77,18 @@ public final class Checklist {
         return checklist;
     }
 
+    /**
+     * Ticked (PAID) only if you ticked it; nothing else ticks a bill. A bill from before the account's
+     * last balance update that you haven't ticked is BEFORE_BALANCE_UPDATE: shown unticked, but not
+     * counted in the forecast, since the balance you typed in already includes it.
+     */
     private static ChecklistItem.Status statusOf(ScheduledItem item, LocalDate date, LocalDate balanceDate,
                                                  LocalDate today) {
-        if (date.isBefore(balanceDate)) {
-            return ChecklistItem.Status.CLEARED;
-        }
         if (item.paidThrough() != null && !date.isAfter(item.paidThrough())) {
             return ChecklistItem.Status.PAID;
+        }
+        if (date.isBefore(balanceDate)) {
+            return ChecklistItem.Status.BEFORE_BALANCE_UPDATE;
         }
         if (date.isBefore(today)) {
             return ChecklistItem.Status.OVERDUE;
