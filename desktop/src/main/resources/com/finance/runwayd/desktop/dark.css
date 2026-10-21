@@ -1,0 +1,222 @@
+/*
+ * "Night runway": the dark look for runwayd. Loaded on top of app.css when View → Dark Mode is on,
+ * so it only changes colors; sizes and layout stay in app.css.
+ *
+ * Palette:
+ *   #0f172a  deep navy       the page behind everything
+ *   #1e293b  slate           panels, tables, inputs
+ *   #334155  slate border    lines between things
+ *   #e2e8f0  soft white      text
+ *   #94a3b8  slate gray      hints and labels
+ *   #f59e0b  amber           runway lights: buttons, selection, the forecast line
+ *   #4ade80  green           money coming in
+ *   #f87171  red             money going out, debt, errors
+ */
+
+/* ---- JavaFX's built-in look (Modena) works everything else out from these ---- */
+
+.root {
+    -fx-base: #1e293b;
+    -fx-background: #0f172a;
+    -fx-background-color: #0f172a;
+    -fx-control-inner-background: #1e293b;
+    -fx-control-inner-background-alt: #233148;   /* every other table row */
+    -fx-accent: #f59e0b;
+    -fx-focus-color: #f59e0b;
+    -fx-faint-focus-color: #f59e0b33;
+    -fx-default-button: #f59e0b;
+    -fx-selection-bar: #f59e0b;
+    -fx-selection-bar-non-focused: #7c5a1d;
+    -fx-selection-bar-text: #0f172a;
+    -fx-text-base-color: #e2e8f0;
+    -fx-text-background-color: #e2e8f0;
+    -fx-text-inner-color: #e2e8f0;
+    -fx-box-border: #334155;
+    -fx-text-box-border: #334155;
+    -fx-outer-border: #334155;
+    -fx-mark-color: #e2e8f0;                     /* tick marks in check boxes */
+}
+
+/* Prompt text in empty boxes ("e.g. Mortgage"). */
+.text-input {
+    -fx-prompt-text-fill: #64748b;
+}
+
+/* ---- text styles ---- */
+
+.hint,
+.status-bar,
+.stat-label {
+    -fx-text-fill: #94a3b8;
+}
+
+.negative,
+.form-error,
+.debt-line {
+    -fx-text-fill: #f87171;
+}
+
+.positive {
+    -fx-text-fill: #4ade80;
+}
+
+/* ---- Bills tab: category group headers ---- */
+
+.titled-pane > .title {
+    -fx-background-color: #1e293b;
+    -fx-border-color: #334155;
+    -fx-border-width: 0 0 1 0;
+}
+
+/* ---- tables ---- */
+
+.table-view {
+    -fx-background-color: #1e293b;
+    -fx-border-color: #334155;
+}
+
+.table-view .column-header-background,
+.table-view .column-header,
+.table-view .filler {
+    -fx-background-color: #162033;
+    -fx-border-color: #334155;
+    -fx-border-width: 0 0 1 0;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: #94a3b8;
+}
+
+/* A selected row: amber bar, dark text on it (red/green money stays readable). */
+.table-row-cell:selected .negative,
+.table-row-cell:selected .positive {
+    -fx-text-fill: #0f172a;
+}
+
+/* ---- banners ---- */
+
+.warning {
+    -fx-background-color: #3b2a0b;
+    -fx-border-color: #7c5a1d;
+    -fx-text-fill: #fbbf24;
+}
+
+/* ---- buttons ---- */
+
+.button.primary {
+    -fx-base: #f59e0b;
+    -fx-text-fill: #0f172a;
+    -fx-font-weight: bold;
+}
+
+/* ---- charts ---- */
+
+.chart-plot-background {
+    -fx-background-color: transparent;
+}
+
+.chart-vertical-grid-lines,
+.chart-horizontal-grid-lines {
+    -fx-stroke: #273449;
+}
+
+.chart-alternative-row-fill,
+.chart-alternative-column-fill {
+    -fx-fill: transparent;
+}
+
+.axis {
+    -fx-tick-label-fill: #94a3b8;
+}
+
+.axis-label,
+.chart-title {
+    -fx-text-fill: #e2e8f0;
+}
+
+.chart-legend {
+    -fx-background-color: #1e293b;
+}
+
+/* The forecast line: amber, like runway lights. */
+.chart-series-line {
+    -fx-stroke: #f59e0b;
+}
+
+/* ---- Debt tab: the big numbers across the top ---- */
+
+.stat-card {
+    -fx-background-color: #1e293b;
+    -fx-border-color: #334155;
+}
+
+/* ---- pop-ups and forms ---- */
+
+.dialog-pane,
+.dialog-pane > .button-bar > .container {
+    -fx-background-color: #0f172a;
+}
+
+.dialog-pane > .content {
+    -fx-text-fill: #e2e8f0;
+}
+
+.tooltip {
+    -fx-background-color: #334155;
+    -fx-text-fill: #e2e8f0;
+}
+
+/* The Debt tab's stacked chart: one bright band per debt, so they stand apart on navy. */
+.default-color0.chart-series-area-fill { -fx-fill: #f59e0b66; }
+.default-color1.chart-series-area-fill { -fx-fill: #38bdf866; }
+.default-color2.chart-series-area-fill { -fx-fill: #4ade8066; }
+.default-color3.chart-series-area-fill { -fx-fill: #a78bfa66; }
+.default-color4.chart-series-area-fill { -fx-fill: #f472b666; }
+.default-color5.chart-series-area-fill { -fx-fill: #2dd4bf66; }
+.default-color6.chart-series-area-fill { -fx-fill: #f8717166; }
+.default-color7.chart-series-area-fill { -fx-fill: #facc1566; }
+.default-color0.chart-series-area-line, .default-color0.chart-area-symbol { -fx-stroke: #f59e0b; -fx-background-color: #f59e0b; }
+.default-color1.chart-series-area-line, .default-color1.chart-area-symbol { -fx-stroke: #38bdf8; -fx-background-color: #38bdf8; }
+.default-color2.chart-series-area-line, .default-color2.chart-area-symbol { -fx-stroke: #4ade80; -fx-background-color: #4ade80; }
+.default-color3.chart-series-area-line, .default-color3.chart-area-symbol { -fx-stroke: #a78bfa; -fx-background-color: #a78bfa; }
+.default-color4.chart-series-area-line, .default-color4.chart-area-symbol { -fx-stroke: #f472b6; -fx-background-color: #f472b6; }
+.default-color5.chart-series-area-line, .default-color5.chart-area-symbol { -fx-stroke: #2dd4bf; -fx-background-color: #2dd4bf; }
+.default-color6.chart-series-area-line, .default-color6.chart-area-symbol { -fx-stroke: #f87171; -fx-background-color: #f87171; }
+.default-color7.chart-series-area-line, .default-color7.chart-area-symbol { -fx-stroke: #facc15; -fx-background-color: #facc15; }
+
+/* ---- tabs: navy bar, amber line under the one you're on ---- */
+
+.tab-pane > .tab-header-area > .tab-header-background {
+    -fx-background-color: #0b1222;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab {
+    -fx-background-color: transparent;
+    -fx-padding: 4 12;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: #0f172a;
+    -fx-border-color: #f59e0b;
+    -fx-border-width: 0 0 2 0;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab .tab-label {
+    -fx-text-fill: #94a3b8;
+}
+
+.tab-pane > .tab-header-area > .headers-region > .tab:selected .tab-label {
+    -fx-text-fill: #e2e8f0;
+}
+
+/* The All / Bills / Income / Transfers filter: the one that's on is amber. */
+.toggle-button:selected {
+    -fx-base: #f59e0b;
+    -fx-text-fill: #0f172a;
+}
+
+/* The note above the tabs: a strip of amber on navy. */
+.banner {
+    -fx-background-color: #3b2a0b;
+    -fx-text-fill: #fbbf24;
+}

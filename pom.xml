@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Parent build for runwayd.
+
+  The app is split into two modules so the "backend" and "frontend" can never
+  get tangled together:
+
+    core     - plain Java. Accounts, bills, the forecast math, saving to disk.
+               It has NO JavaFX dependency, so UI code cannot sneak in here.
+    desktop  - the JavaFX window. It depends on core and only talks to it
+               through FinanceService.
+
+  Common commands (run from this folder):
+    mvn test                          run the core unit tests
+    mvn install && mvn -pl desktop javafx:run    build everything and open the app
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.finance.runwayd</groupId>
+    <artifactId>runwayd-parent</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>core</module>
+        <module>desktop</module>
+    </modules>
+
+    <properties>
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <jackson.version>2.17.2</jackson.version>
+        <javafx.version>21.0.4</javafx.version>
+        <junit.version>5.10.3</junit.version>
+
+        <!--
+          Self-updating (see README, "Releasing an update"). The app only checks for updates when both
+          are filled in, and only installs a download signed by this Apple Team ID.
+            runwayd.updateRepo  the public GitHub repo whose Releases hold the app, e.g. yourname/runwayd
+            runwayd.teamId      your Apple Developer Team ID (10 characters, shown in your certificate's name)
+        -->
+        <runwayd.updateRepo>Jmason15/runwayd</runwayd.updateRepo>
+        <runwayd.teamId>U4W63ALSJ3</runwayd.teamId>
+    </properties>
+
+    <!-- Versions are pinned here once; the modules just name what they use. -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.finance.runwayd</groupId>
+                <artifactId>core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jsr310</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-controls</artifactId>
+                <version>${javafx.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>${junit.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.3.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

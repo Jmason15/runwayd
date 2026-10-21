@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  desktop: the "frontend". JavaFX screens only.
+
+  Rule for this module: no money math and no file handling. Everything goes
+  through core's FinanceService.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.finance.runwayd</groupId>
+        <artifactId>runwayd-parent</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>desktop</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.finance.runwayd</groupId>
+            <artifactId>core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <!-- version.properties gets the version, update repo and Team ID filled in; everything else is copied as is. -->
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <includes>
+                    <include>**/*.properties</include>
+                </includes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>**/*.properties</exclude>
+                </excludes>
+            </resource>
+        </resources>
+        <plugins>
+            <!-- Lets you start the app with: mvn -pl desktop javafx:run -->
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <configuration>
+                    <mainClass>com.finance.runwayd.desktop.Launcher</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

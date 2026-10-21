@@ -1,0 +1,19 @@
+# Build output
+target/
+dist/
+
+# Temp files from saving data
+*.json.tmp
+
+# Personal finance data never goes in the repo (it lives in ~/runwayd/)
+data/
+*.budget.json
+*.runwayd.json
+*.paydar.json
+*.treasuretracker.json
+
+# Editor and macOS clutter
+.idea/
+.vscode/
+*.iml
+.DS_Store

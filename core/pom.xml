@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  core: the "backend". Plain Java only.
+
+  Rule for this module: no JavaFX, no UI. If something here needs to show a
+  message to the user, it throws an exception and the desktop module decides
+  how to display it.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.finance.runwayd</groupId>
+        <artifactId>runwayd-parent</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <artifactId>core</artifactId>
+
+    <dependencies>
+        <!-- Reads and writes the JSON data file. -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        <!-- Teaches Jackson to read/write LocalDate as "2026-10-18". -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

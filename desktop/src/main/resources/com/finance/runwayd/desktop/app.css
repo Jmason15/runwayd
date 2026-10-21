@@ -1,0 +1,141 @@
+/*
+ * Look and feel for runwayd: sizes, layout and the light colors.
+ * When View → Dark Mode is on, dark.css is loaded on top and swaps in the "Night runway" colors.
+ */
+
+.root {
+    -fx-font-family: "System";
+    -fx-font-size: 13px;
+    -fx-base: #f4f4f4;
+    -fx-background-color: #eeeeee;
+    -fx-accent: #185fa5;          /* selection highlight */
+    -fx-focus-color: #185fa5;
+}
+
+/* ---- text styles ---- */
+
+.heading {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+.hint {
+    -fx-text-fill: #666666;
+}
+
+/* Money below zero, anywhere it appears in a table. */
+.negative {
+    -fx-text-fill: #a32d2d;
+}
+
+/* Money coming in, e.g. a category total that's net positive. */
+.positive {
+    -fx-text-fill: #3b6d11;
+}
+
+/* ---- Bills tab: collapsible category groups ---- */
+
+.group-title {
+    -fx-font-weight: bold;
+}
+
+.titled-pane > .title {
+    -fx-background-color: #e8e8e8;
+    -fx-background-radius: 6 6 0 0;
+    -fx-padding: 6 10;
+}
+
+.titled-pane > .title .positive,
+.titled-pane > .title .negative {
+    -fx-font-weight: bold;
+}
+
+/* The scroll area around the groups blends into the page instead of drawing a box. */
+.plain-scroll,
+.plain-scroll > .viewport {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+
+/* Vertically center all cell text, so it lines up with buttons in the same row. */
+.table-cell {
+    -fx-alignment: CENTER-LEFT;
+}
+
+/* ---- money columns: right-aligned so the decimal points line up ---- */
+
+.table-cell.money-column {
+    -fx-alignment: CENTER-RIGHT;
+}
+
+.column-header.money-column .label {
+    -fx-alignment: CENTER-RIGHT;
+}
+
+/* ---- banners ---- */
+
+.warning {
+    -fx-background-color: #fdf3e1;
+    -fx-border-color: #f0d9a8;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-text-fill: #8a5a00;
+    -fx-padding: 8 12;
+}
+
+.form-error {
+    -fx-text-fill: #a32d2d;
+}
+
+.status-bar {
+    -fx-text-fill: #666666;
+    -fx-font-size: 11px;
+}
+
+/* ---- buttons ---- */
+
+.button.primary {
+    -fx-base: #185fa5;
+    -fx-text-fill: white;
+}
+
+/* ---- chart: one blue line ---- */
+
+.chart-series-line {
+    -fx-stroke: #185fa5;
+    -fx-stroke-width: 2px;
+}
+
+/* ---- Debt tab: the three big numbers across the top ---- */
+
+.stat-card {
+    -fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 12 16;
+}
+
+.stat-label {
+    -fx-text-fill: #666666;
+}
+
+.stat-value {
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+}
+
+/* The "Total debt: ..." line on the Forecast tab. */
+.debt-line {
+    -fx-font-weight: bold;
+    -fx-text-fill: #a32d2d;
+    -fx-padding: 4 0 0 0;
+}
+
+/* The note above the tabs: "you're in the demo budget", or how to start on an empty one. */
+.banner {
+    -fx-background-color: #e8f0fb;
+    -fx-text-fill: #1d3d66;
+    -fx-padding: 8 16;
+}

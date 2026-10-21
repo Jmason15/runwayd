@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  What runwayd is allowed to do under Apple's "hardened runtime", which notarization requires.
+  These are the standard three a Java app needs, nothing more:
+    allow-jit, allow-unsigned-executable-memory  Java compiles code while it runs
+    disable-library-validation                   JavaFX unpacks its own native libraries at start-up
+-->
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+</dict>
+</plist>
