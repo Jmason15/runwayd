@@ -18,6 +18,7 @@ import java.time.YearMonth;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -98,6 +99,49 @@ class ChecklistTest {
         ScheduledItem internet = bill("Internet", "80.00", today.plusDays(1));
 
         assertEquals(Status.UPCOMING, entryFor(internet, today.plusDays(1)).status());
+    }
+
+    // ---- "checked without us checking it": bills from before a balance update ----
+
+    @Test
+    void updatingTheBalanceShowsEarlierBillsAsInBalanceNotPaid() {
+        // The report: after a balance update, earlier bills looked ticked though nobody ticked them.
+        ScheduledItem lunch = bill("School Lunch", "31.48", today.minusDays(3));
+
+        // Look across last month too, in case "3 days ago" was in it.
+        ChecklistItem entry = service.checklist(YearMonth.from(today.minusDays(3)), YearMonth.from(today)).stream()
+                .filter(e -> !e.isBudgetSplit() && e.item().id() == lunch.id() && e.date().equals(today.minusDays(3)))
+                .findFirst().orElseThrow();
+
+        assertEquals(Status.CLEARED, entry.status(), "it's before the balance date, so it's in that balance");
+        assertEquals("In balance", entry.status().toString(), "labelled as in the balance, not as paid");
+        assertEquals(null, service.items().get(0).paidThrough(), "nobody marked it paid");
+    }
+
+    @Test
+    void aBillThatHasntGoneThroughYetCanBeCountedAgain() {
+        ScheduledItem lunch = bill("School Lunch", "31.48", today.minusDays(3));
+        BigDecimal before = service.forecast(today).balanceOf(checking.id());
+
+        ScheduledItem again = service.stillToCome(lunch.id(), today.minusDays(3));
+
+        assertTrue(again.name().startsWith("School Lunch (from "), again.name());
+        assertEquals(before.subtract(new BigDecimal("31.48")), service.forecast(today).balanceOf(checking.id()),
+                "the forecast counts it again");
+        assertEquals(Status.DUE_TODAY, entryFor(again, today).status(), "it's on the checklist to tick off");
+
+        service.stillToCome(lunch.id(), today.minusDays(3));
+        assertEquals(before.subtract(new BigDecimal("31.48")), service.forecast(today).balanceOf(checking.id()),
+                "asking twice doesn't count it twice");
+
+        service.setPaid(again.id(), today, true);
+        assertEquals(before, service.forecast(today).balanceOf(checking.id()), "and ticking it off works as usual");
+    }
+
+    @Test
+    void onlyBillsFromBeforeTheBalanceUpdateCanBeCountedAgain() {
+        ScheduledItem rent = bill("Rent", "900.00", today.plusDays(2));
+        assertThrows(IllegalArgumentException.class, () -> service.stillToCome(rent.id(), today.plusDays(2)));
     }
 
     // ---- looking further ahead ----

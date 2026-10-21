@@ -170,6 +170,11 @@ public final class FinanceService {
         return bills.undoLastPaid(itemId);
     }
 
+    /** A bill from before the last balance update that hasn't gone through yet: count it again (see Bills). */
+    public ScheduledItem stillToCome(int itemId, LocalDate date) {
+        return bills.stillToCome(itemId, date);
+    }
+
     /** The Forecast tab's "This month" list (see Checklist). */
     public List<ChecklistItem> monthChecklist(YearMonth month) {
         return checklist.forMonth(month);

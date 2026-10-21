@@ -48,7 +48,7 @@ public record ChecklistItem(ScheduledItem item, BudgetBucket bucket, BigDecimal 
         /** You ticked it off. The forecast doesn't count it any more. */
         PAID("Paid"),
         /** Due before your last balance update, so it's already in that balance. */
-        CLEARED("Cleared"),
+        CLEARED("In balance"),
         /** Due before today and not ticked off yet. */
         OVERDUE("Overdue"),
         /** Due today and not ticked off yet. */
