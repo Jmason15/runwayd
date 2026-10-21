@@ -20,6 +20,9 @@ set -euo pipefail
 cd "$(dirname "$0")"
 export JAVA_HOME=$(ls -d ~/tools/jdk-21*/Contents/Home)
 export PATH="$JAVA_HOME/bin:$HOME/tools/apache-maven-3.9.9/bin:$PATH"
+# The GitHub CLI (gh) lives in ~/tools too; use the newest one there if there's one.
+GH_BIN=$(ls -d $HOME/tools/gh_*/bin 2>/dev/null | sort -V | tail -1)
+[[ -n "$GH_BIN" ]] && export PATH="$GH_BIN:$PATH"
 
 VERSION="${1:-}"
 NOTES="${2:-runwayd $VERSION}"
