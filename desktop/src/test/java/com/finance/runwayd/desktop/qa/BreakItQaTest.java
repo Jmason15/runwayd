@@ -52,7 +52,7 @@ class BreakItQaTest extends QaBase {
 
         openTab("Bills & Income");
         assertEquals("Joint Checking", cell(tablesWithColumn("Next due").get(0), 0, "Account"));
-        assertShows("2000", forecastCell("Joint Checking", "Today"), "Forecast tab uses the new name");
+        assertShows("2000", forecastCell("Joint Checking", "Balance"), "Forecast tab uses the new name");
         chooseIn(byId("checklistRange"), "3 months");
         assertEquals("Joint Checking", cellWhere(byId("checklist"), "What", "Rent", "Account"));
     }

@@ -53,7 +53,7 @@ Mistakes are easy to take back:
 
 Counting starts the day you began tracking: the earliest balance date when the budget was set up (saved in the budget file as `trackingSince`). Bills from before then never count and aren't listed. The list also shows each line's **Account** and the **Balance after**: what that account will hold right after the bill is paid (or the paycheck lands, or the budget transfer goes out), straight from the forecast. Lines on the same day are in the order the forecast applies them, so the balances read top to bottom. Ticked bills show no balance, since they aren't coming out again.
 
-On the Forecast tab, **Today** is the balance you entered, the same as the Accounts tab, so it matches your bank. Bills you haven't ticked come out in **On chosen date** and in the checklist's **Balance after**, which starts from that balance.
+On the Forecast tab, **Balance** is the balance you entered, the same as the Accounts tab, so it matches your bank, and **Updated** says when: "Today", or the date. Typing a new amount there updates the account, the same as Update balance. Bills you haven't ticked come out in **On chosen date** and in the checklist's **Balance after**, which starts from that balance.
 
 **A box is only ever ticked by you.** Tick a bill when it's paid and it's removed from every calculation; untick it to put it back. Ticked bills from earlier months drop off the list; unticked ones stay, month after month, until you tick them. Budget splits work the same way.
 

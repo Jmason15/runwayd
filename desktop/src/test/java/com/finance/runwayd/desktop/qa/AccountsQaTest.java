@@ -27,7 +27,8 @@ class AccountsQaTest extends QaBase {
 
         openTab("Forecast");
         TableView<?> forecast = byId("forecastAccounts");
-        assertShows("2500", cellWhere(forecast, "Account", "Everyday Checking", "Today"), "Today on the Forecast tab");
+        assertShows("2500", cellWhere(forecast, "Account", "Everyday Checking", "Balance"), "Today on the Forecast tab");
+        assertEquals("Today", cellWhere(forecast, "Account", "Everyday Checking", "Updated"), "updated today");
 
         // And it was saved, exactly as typed.
         assertEquals(new BigDecimal("2500.00"), reopened().accounts().get(0).balance());

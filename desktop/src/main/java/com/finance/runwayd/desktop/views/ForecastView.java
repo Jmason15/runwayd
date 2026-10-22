@@ -45,7 +45,7 @@ import java.util.List;
  * <pre>
  *   Show balances on: [date]  [+1 month] [+3 months] [+6 months] [+1 year]
  *   (warning if a balance is old)
- *   ┌ Accounts: today (click to type your bank balance) / on that date / low point ┐
+ *   ┌ Accounts: balance (click to type your bank's) / updated / on that date / low point ┐
  *   Total debt: today, on that date, debt-free date
  *   ┌ This month: [✓] Oct 1  Store Card  -$340.06  Paid  ...  tick bills off as you pay them ┐
  *   Details for: [account]
@@ -106,7 +106,7 @@ public final class ForecastView extends ScrollPane implements Refreshable {
     private Forecast forecast;
 
     /** One row of the summary table. The text in {@code note} depends on the account type. */
-    private record AccountSummary(Account account, BigDecimal today, BigDecimal onDate, String note) {
+    private record AccountSummary(Account account, BigDecimal balance, BigDecimal onDate, String note) {
     }
 
     public ForecastView(FinanceService service) {
@@ -133,7 +133,7 @@ public final class ForecastView extends ScrollPane implements Refreshable {
         HBox detailsBar = new HBox(8, detailsLabel, accountPicker);
         detailsBar.setAlignment(Pos.CENTER_LEFT);
 
-        Label balanceHint = new Label("Tip: click an amount under \"Today\" to type in what your bank or card statement shows, "
+        Label balanceHint = new Label("Tip: click an amount under \"Balance\" to type in what your bank or card statement shows, "
                 + "then press Enter. Cards and loans show as negative because that money is owed.");
         balanceHint.getStyleClass().add("hint");
         debtLine.getStyleClass().add("debt-line");
@@ -195,9 +195,11 @@ public final class ForecastView extends ScrollPane implements Refreshable {
         // Click to check the account online (the website set on the Accounts or Debt tab).
         summaryTable.getColumns().add(Tables.link("Website", row -> row.account().website()));
         summaryTable.getColumns().add(Tables.text("Type", row -> row.account().type().label()));
-        // Typing in the "Today" column saves it as the account's real balance as of today.
+        // The balance as entered (the same as the Accounts tab) and when it was last updated. Typing in the
+        // Balance column saves what the bank shows now, as of today, the same as Update balance.
         summaryTable.setEditable(true);
-        summaryTable.getColumns().add(Tables.editableMoney("Today", AccountSummary::today, this::saveBankBalance));
+        summaryTable.getColumns().add(Tables.editableMoney("Balance", AccountSummary::balance, this::saveBankBalance));
+        summaryTable.getColumns().add(Tables.text("Updated", row -> updatedText(row.account().balanceDate())));
         summaryTable.getColumns().add(Tables.money("On chosen date", AccountSummary::onDate));
         summaryTable.getColumns().add(Tables.text("Watch out for", AccountSummary::note));
         // Clicking a row shows that account's details below.
@@ -395,8 +397,13 @@ public final class ForecastView extends ScrollPane implements Refreshable {
      * do it, because money you owe counts against you. The account itself still
      * stores what you owe as a positive number.
      */
+    /** "Today" if the balance was updated today, otherwise the date it was, e.g. "Oct 18, 2026". */
+    private static String updatedText(LocalDate balanceDate) {
+        return balanceDate.equals(LocalDate.now()) ? "Today" : Format.date(balanceDate);
+    }
+
     /**
-     * One row. "Today" is the balance as entered (the same as the Accounts tab), so it matches the bank;
+     * One row. "Balance" is the balance as entered (the same as the Accounts tab), so it matches the bank;
      * bills not ticked yet show up in "On chosen date" and on the checklist instead.
      */
     private AccountSummary summaryRow(Account account, DebtSummary debt) {

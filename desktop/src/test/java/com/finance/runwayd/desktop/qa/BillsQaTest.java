@@ -45,7 +45,7 @@ class BillsQaTest extends QaBase {
         assertFooter("-150", "-1800");
 
         // Today it hasn't come out yet; a month from now it has, once.
-        assertShows("2000", forecastCell("Checking", "Today"), "not due yet");
+        assertShows("2000", forecastCell("Checking", "Balance"), "not due yet");
         showBalancesOn(today.plusMonths(1));
         assertShows("1850", forecastCell("Checking", "On chosen date"), "$2,000 - $150");
 

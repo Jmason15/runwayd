@@ -37,14 +37,14 @@ class ChecklistQaTest extends QaBase {
         assertEquals("[ ]", checklistCell("Groceries", "Paid"));
         assertEquals("Overdue", checklistCell("Groceries", "Status"));
         assertShows("1800", checklistCell("Groceries", "Balance after"), "$2,000 - $200");
-        assertShows("2000", forecastCell("Checking", "Today"), "Today is what's in the bank, like the Accounts tab");
+        assertShows("2000", forecastCell("Checking", "Balance"), "Today is what's in the bank, like the Accounts tab");
         showBalancesOn(today);
         assertShows("1800", forecastCell("Checking", "On chosen date"), "the bill still counts in the forecast");
 
         // The bank says $1,900 now. The bill isn't ticked, so it still counts: 1,900 - 200.
         TableView<?> accounts = byId("forecastAccounts");
-        typeIntoCell(accounts, rowWhere(accounts, "Account", "Checking"), "Today", "1900");
-        assertShows("1900", forecastCell("Checking", "Today"), "what was typed");
+        typeIntoCell(accounts, rowWhere(accounts, "Account", "Checking"), "Balance", "1900");
+        assertShows("1900", forecastCell("Checking", "Balance"), "what was typed");
         assertShows("1700", forecastCell("Checking", "On chosen date"), "a balance update doesn't tick anything");
         assertEquals("[ ]", checklistCell("Groceries", "Paid"), "nobody ticked it");
         assertEquals("Overdue", checklistCell("Groceries", "Status"));
