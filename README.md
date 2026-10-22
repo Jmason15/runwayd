@@ -29,7 +29,7 @@ The rules behind each tab are in **[docs/how-it-works.md](docs/how-it-works.md)*
 Needs **Java 21** and **Maven 3.9**.
 
 ```bash
-mvn install                       # build both modules and run the tests
+mvn install                       # build both modules and run every test (unit + QA)
 mvn -pl desktop javafx:run        # open the app
 ```
 
@@ -67,6 +67,8 @@ desktop/      FRONTEND: JavaFX only, no money math
 ```
 
 Tests sit in the same packages as the code they test (`core/src/test/...`).
+
+**QA tests** (`desktop/src/test/.../qa`) open the real window on a throwaway budget and click through it like a person: adding accounts, bills and debts, ticking the checklist, typing balances, trying bad input. Then they check that every tab shows the same numbers, that they add up to the cent, and that the saved file matches. They run invisibly as part of `mvn install`, in `publish.sh` before anything is signed, and on GitHub Actions for every push (`.github/workflows/qa.yml`). To watch them: `mvn -pl desktop test -Dqa.headless=false`.
 
 ## Installing it on a Mac
 

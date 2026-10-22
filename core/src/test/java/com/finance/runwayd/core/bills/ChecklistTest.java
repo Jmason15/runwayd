@@ -183,6 +183,20 @@ class ChecklistTest {
         assertEquals(new BigDecimal("1100.00"), lineFor(rent, today.plusDays(1)).balanceAfter(), "now Rent alone");
     }
 
+    @Test
+    void eachLineShowsWhatTheForecastReallyMoves() {
+        // A $100 payment to a card that only owes $30 pays $30. The line must say so, not $100.
+        Account card = service.addAccount(new Account(0, "Card", AccountType.CREDIT_CARD, new BigDecimal("30.00"),
+                today, null));
+        ScheduledItem payment = service.addItem(new ScheduledItem(0, "Card payment", new BigDecimal("100.00"),
+                Frequency.ONCE, today.plusDays(1), null, checking.id(), card.id()));
+
+        ChecklistItem line = lineFor(payment, today.plusDays(1));
+
+        assertEquals(new BigDecimal("-30.00"), line.change(), "out of checking: only what was owed");
+        assertEquals(new BigDecimal("1970.00"), line.balanceAfter());
+    }
+
     /** A line from this month through two days from now (which may be next month). */
     private ChecklistItem lineFor(ScheduledItem item, LocalDate date) {
         return service.checklist(YearMonth.from(today), YearMonth.from(today.plusDays(2))).stream()

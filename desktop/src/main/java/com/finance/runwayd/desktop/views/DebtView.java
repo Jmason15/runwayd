@@ -94,6 +94,12 @@ public final class DebtView extends ScrollPane implements Refreshable {
 
     public DebtView(FinanceService service) {
         this.service = service;
+        // Names the QA tests use to find things.
+        table.setId("debtTable");
+        totalTodayLabel.setId("debtTotalToday");
+        totalOnDateLabel.setId("debtTotalOnDate");
+        debtFreeLabel.setId("debtFree");
+        rollOver.setId("rollOver");
 
         buildTable();
         chart.setTitle("Your debt until it's paid off");

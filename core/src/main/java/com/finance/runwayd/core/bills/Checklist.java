@@ -75,15 +75,22 @@ public final class Checklist {
         }
         checklist.addAll(budgetLines(firstOfMonth, endOfLast, today));
 
-        // What each line's account holds right after it, read from the forecast.
+        // What each line's account holds right after it, and how much it actually moved, read from the forecast.
         Forecast forecast = forecasts.on(endOfLast);
         List<LedgerEntry> ledger = forecast.ledger();
         List<ChecklistItem> withBalances = new ArrayList<>();
         Map<ChecklistItem, Integer> ledgerOrder = new HashMap<>();
         for (ChecklistItem entry : checklist) {
             int account = accountOf(entry);
-            int index = lastLedgerLineFor(entry, account, ledger);
-            ChecklistItem filled = entry.withBalanceAfter(account, index < 0 ? null : ledger.get(index).balanceAfter());
+            int index = -1;          // its last ledger line, for the balance after it
+            BigDecimal moved = null; // all its ledger lines added up (a debt bucket can pay several debts)
+            for (int i = 0; i < ledger.size(); i++) {
+                if (isLineFor(entry, account, ledger.get(i))) {
+                    index = i;
+                    moved = moved == null ? ledger.get(i).change() : moved.add(ledger.get(i).change());
+                }
+            }
+            ChecklistItem filled = entry.withForecast(account, index < 0 ? null : ledger.get(index).balanceAfter(), moved);
             withBalances.add(filled);
             ledgerOrder.put(filled, index < 0 ? Integer.MAX_VALUE : index);
         }
@@ -108,26 +115,17 @@ public final class Checklist {
     }
 
     /**
-     * Where this line's last change to {@code account} is in the ledger, or -1 if it isn't in the forecast.
-     * A bill is found by its id; a bucket by its "Budget: Savings" description (a debt bucket can pay
-     * several debts in a row, so the last of them).
+     * True if {@code line} is this checklist line's change to {@code account}: a bill is found by its id; a
+     * bucket by its "Budget: Savings" description (a debt bucket can pay several debts in a row).
      */
-    private static int lastLedgerLineFor(ChecklistItem entry, int account, List<LedgerEntry> ledger) {
-        int found = -1;
-        for (int i = 0; i < ledger.size(); i++) {
-            LedgerEntry line = ledger.get(i);
-            if (line.accountId() != account || !line.date().equals(entry.date())) {
-                continue;
-            }
-            boolean matches = entry.isBudgetSplit()
-                    ? line.itemId() == null && (line.description().equals("Budget: " + entry.bucket().name())
-                            || line.description().startsWith("Budget: " + entry.bucket().name() + " → "))
-                    : Integer.valueOf(entry.item().id()).equals(line.itemId());
-            if (matches) {
-                found = i;
-            }
+    private static boolean isLineFor(ChecklistItem entry, int account, LedgerEntry line) {
+        if (line.accountId() != account || !line.date().equals(entry.date())) {
+            return false;
         }
-        return found;
+        return entry.isBudgetSplit()
+                ? line.itemId() == null && (line.description().equals("Budget: " + entry.bucket().name())
+                        || line.description().startsWith("Budget: " + entry.bucket().name() + " → "))
+                : Integer.valueOf(entry.item().id()).equals(line.itemId());
     }
 
     /**

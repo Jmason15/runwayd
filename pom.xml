@@ -36,6 +36,8 @@
         <jackson.version>2.17.2</jackson.version>
         <javafx.version>21.0.4</javafx.version>
         <junit.version>5.10.3</junit.version>
+        <testfx.version>4.0.18</testfx.version>
+        <monocle.version>21.0.2</monocle.version>
 
         <!--
           Self-updating (see README, "Releasing an update"). The app only checks for updates when both
@@ -74,6 +76,19 @@
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter</artifactId>
                 <version>${junit.version}</version>
+            </dependency>
+            <!-- For the QA click-through tests in desktop: TestFX drives the real window, Monocle runs it invisibly. -->
+            <dependency>
+                <groupId>org.testfx</groupId>
+                <artifactId>testfx-junit5</artifactId>
+                <version>${testfx.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.testfx</groupId>
+                <artifactId>openjfx-monocle</artifactId>
+                <version>${monocle.version}</version>
+                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -96,6 +96,12 @@ public final class BillsView extends BorderPane implements Refreshable {
     public BillsView(FinanceService service) {
         this.service = service;
         setPadding(new Insets(16));
+        // Names the QA tests use to find things.
+        searchField.setId("billSearch");
+        countLabel.setId("billCount");
+        netLabel.setId("billNet");
+        undoMessage.setId("undoMessage");
+        undoButton.setId("undoButton");
 
         ScrollPane scroller = new ScrollPane(groups);
         scroller.setFitToWidth(true);

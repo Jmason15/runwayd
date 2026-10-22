@@ -6,7 +6,9 @@
 # What it does, in order (it stops at the first problem, before anything is pushed):
 #   1. checks your setup: a clean git tree, your Developer ID certificate, saved notary
 #      credentials, the GitHub CLI signed in, and a version newer than the last one
-#   2. sets the version in the three pom.xml files, builds, and runs every test
+#   2. sets the version in the three pom.xml files, builds, and runs every test: the unit tests and
+#      the QA click-through tests (desktop/src/test/.../qa), which drive the real window invisibly.
+#      Any failure stops the release here.
 #   3. builds the Mac app, signed with your Developer ID (with the native libraries inside
 #      JavaFX's jars signed too, since Apple checks inside jars)
 #   4. sends it to Apple for notarization (a few minutes) and staples the approval on
@@ -65,7 +67,7 @@ echo "  releasing $VERSION (was $CURRENT) to $REPO, signed by $IDENTITY"
 # ---------------------------------------------------------------------------
 # 2. Set the version, build and test
 # ---------------------------------------------------------------------------
-step "Building and testing $VERSION"
+step "Building and testing $VERSION (unit tests + QA click-through, a few minutes)"
 if [[ "$CURRENT" != "$VERSION" ]]; then
     sed -i '' "s#<version>$CURRENT</version>#<version>$VERSION</version>#" pom.xml core/pom.xml desktop/pom.xml
 fi

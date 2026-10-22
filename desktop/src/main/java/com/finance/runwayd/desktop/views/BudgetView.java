@@ -121,6 +121,14 @@ public final class BudgetView extends ScrollPane implements Refreshable {
 
     public BudgetView(FinanceService service) {
         this.service = service;
+        // Names the QA tests use to find things.
+        cushionField.setId("cushion");
+        accountBox.setId("budgetAccount");
+        bucketGrid.setId("buckets");
+        editError.setId("budgetError");
+        paycheckTable.setId("paychecks");
+        lowBalanceWarning.setId("lowBalanceWarning");
+        periodBox.setId("budgetPeriod");
 
         Label heading = new Label("Split each paycheck");
         heading.getStyleClass().add("heading");

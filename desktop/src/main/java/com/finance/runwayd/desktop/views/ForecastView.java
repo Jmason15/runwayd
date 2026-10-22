@@ -116,6 +116,15 @@ public final class ForecastView extends ScrollPane implements Refreshable {
         buildChecklist();
         buildLedgerTable();
 
+        // Names the QA tests use to find things (desktop/src/test/.../qa).
+        summaryTable.setId("forecastAccounts");
+        checklistTable.setId("checklist");
+        ledgerTable.setId("ledger");
+        datePicker.setId("forecastDate");
+        debtLine.setId("debtLine");
+        checklistRange.setId("checklistRange");
+        accountPicker.setId("detailsAccount");
+
         staleWarning.getStyleClass().add("warning");
         staleWarning.setWrapText(true);
         staleWarning.setMaxWidth(Double.MAX_VALUE);
@@ -221,13 +230,28 @@ public final class ForecastView extends ScrollPane implements Refreshable {
         TableColumn<ChecklistItem, String> website = Tables.link("Website", entry -> entry.isBudgetSplit() ? null : entry.item().website());
         website.setPrefWidth(110); // most rows have none, so leave the room to "What"
         checklistTable.getColumns().add(website);
-        checklistTable.getColumns().add(Tables.money("Amount", entry -> entry.isBudgetSplit()
-                ? entry.bucketAmount().negate()
-                : service.signedAmount(entry.item())));
+        checklistTable.getColumns().add(Tables.money("Amount", this::amountOf));
         checklistTable.getColumns().add(Tables.text("Account", entry -> entry.accountId() == null ? ""
                 : service.findAccount(entry.accountId()).map(Account::name).orElse("")));
         checklistTable.getColumns().add(Tables.money("Balance after", this::balanceAfter));
         checklistTable.getColumns().add(Tables.text("Status", entry -> entry.status().toString()));
+    }
+
+    /**
+     * How much the line moves: a bucket's share, or what the forecast actually pays that day. That's
+     * not always the bill's usual amount: a card minimum shrinks as the card is paid down, and a last
+     * payment is only what's still owed. A ticked line isn't in the forecast, so it shows the usual amount.
+     */
+    private BigDecimal amountOf(ChecklistItem entry) {
+        if (entry.isBudgetSplit()) {
+            return entry.bucketAmount().negate();
+        }
+        if (entry.change() == null) {
+            return service.signedAmount(entry.item());
+        }
+        // Same sign as "Balance after": on a card or loan, more owed shows as money out.
+        boolean owed = service.findAccount(entry.accountId()).map(a -> a.type().isDebt()).orElse(false);
+        return owed ? entry.change().negate() : entry.change();
     }
 
     /**

@@ -34,6 +34,7 @@ public final class AccountsView extends BorderPane implements Refreshable {
 
     public AccountsView(FinanceService service) {
         this.service = service;
+        table.setId("accountsTable"); // for the QA tests
         setPadding(new Insets(16));
 
         table.getColumns().add(Tables.text("Name", Account::name));
