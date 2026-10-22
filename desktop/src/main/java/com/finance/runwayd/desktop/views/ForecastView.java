@@ -192,6 +192,8 @@ public final class ForecastView extends ScrollPane implements Refreshable {
 
     private void buildSummaryTable() {
         summaryTable.getColumns().add(Tables.text("Account", row -> row.account().name()));
+        // Click to check the account online (the website set on the Accounts or Debt tab).
+        summaryTable.getColumns().add(Tables.link("Website", row -> row.account().website()));
         summaryTable.getColumns().add(Tables.text("Type", row -> row.account().type().label()));
         // Typing in the "Today" column saves it as the account's real balance as of today.
         summaryTable.setEditable(true);
