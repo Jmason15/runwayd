@@ -2,7 +2,6 @@ package com.finance.runwayd.core.model;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.net.URI;
 import java.time.LocalDate;
 import java.util.Objects;
 
@@ -84,32 +83,7 @@ public record Account(
             throw new IllegalArgumentException("Minimum payment settings can't be negative.");
         }
         name = name.trim();
-        website = cleanWebsite(website);
-    }
-
-    /**
-     * Tidies a typed web address: blank means none, and "mybank.com" becomes
-     * "https://mybank.com" so it can be opened in a browser.
-     *
-     * @throws IllegalArgumentException if it can't be a web address (e.g. contains spaces)
-     */
-    private static String cleanWebsite(String typed) {
-        if (typed == null || typed.isBlank()) {
-            return null;
-        }
-        String website = typed.trim();
-        if (!website.startsWith("http://") && !website.startsWith("https://")) {
-            website = "https://" + website;
-        }
-        try {
-            URI uri = URI.create(website);
-            if (uri.getHost() == null || !uri.getHost().contains(".")) {
-                throw new IllegalArgumentException();
-            }
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("\"" + typed.trim() + "\" doesn't look like a website. Try something like mybank.com");
-        }
-        return website;
+        website = Websites.clean(website);
     }
 
     /**

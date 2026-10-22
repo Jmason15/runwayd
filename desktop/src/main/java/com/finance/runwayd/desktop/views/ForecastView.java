@@ -218,6 +218,9 @@ public final class ForecastView extends ScrollPane implements Refreshable {
         checklistTable.getColumns().add(paidColumn());
         checklistTable.getColumns().add(Tables.date("Due", ChecklistItem::date));
         checklistTable.getColumns().add(Tables.text("What", ChecklistItem::name));
+        TableColumn<ChecklistItem, String> website = Tables.link("Website", entry -> entry.isBudgetSplit() ? null : entry.item().website());
+        website.setPrefWidth(110); // most rows have none, so leave the room to "What"
+        checklistTable.getColumns().add(website);
         checklistTable.getColumns().add(Tables.money("Amount", entry -> entry.isBudgetSplit()
                 ? entry.bucketAmount().negate()
                 : service.signedAmount(entry.item())));

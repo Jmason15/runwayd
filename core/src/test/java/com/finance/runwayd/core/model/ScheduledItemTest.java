@@ -6,11 +6,29 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ScheduledItemTest {
 
     private static final LocalDate JAN_1 = LocalDate.of(2026, 1, 1);
     private static final int CHECKING = 1;
+
+    @Test
+    void aBillCanHaveAWebsiteThatsTidiedAndKeptThroughChanges() {
+        ScheduledItem electric = withWebsite("  myelectric.com ");
+
+        assertEquals("https://myelectric.com", electric.website());
+        assertEquals("https://myelectric.com", electric.withPaidThrough(JAN_1).withAmount(BigDecimal.TEN).website(),
+                "ticking it or changing the amount keeps the link");
+        assertNull(withWebsite("  ").website(), "blank means none");
+        assertThrows(IllegalArgumentException.class, () -> withWebsite("not a website"));
+    }
+
+    private static ScheduledItem withWebsite(String website) {
+        return new ScheduledItem(1, "Electric", Category.OTHER, new BigDecimal("90"), PaymentRule.FIXED,
+                Frequency.MONTHLY, JAN_1, null, CHECKING, null, null, website);
+    }
 
     @Test
     void itemsWithoutACategoryDefaultToIncomeOrOther() {

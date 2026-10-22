@@ -46,6 +46,7 @@ public final class ItemDialog extends FormDialog<ScheduledItem> {
     private final DatePicker endDatePicker = new DatePicker();
     private final ComboBox<Account> fromBox = new ComboBox<>();
     private final ComboBox<Account> toBox = new ComboBox<>();
+    private final TextField websiteField = new TextField();
 
     private final FormRow ruleRow;
     private final FormRow amountRow;
@@ -72,6 +73,7 @@ public final class ItemDialog extends FormDialog<ScheduledItem> {
         nameField.setPromptText("e.g. Mortgage");
         amountField.setPromptText("e.g. 1450.00");
         endDatePicker.setPromptText("optional");
+        websiteField.setPromptText("optional, e.g. myelectric.com");
 
         Label hint = new Label("Tip: pick a credit card or loan here to pay down that debt.");
         hint.getStyleClass().add("hint");
@@ -87,6 +89,7 @@ public final class ItemDialog extends FormDialog<ScheduledItem> {
         fromRow = addRow("Paid from", fromBox);
         toRow = addRow("Paid into", toBox);
         hintRow = addRow("", hint);
+        addRow("Website", websiteField);
 
         if (existing != null) {
             fillFrom(existing, accounts);
@@ -120,6 +123,7 @@ public final class ItemDialog extends FormDialog<ScheduledItem> {
         endDatePicker.setValue(item.endDate());
         fromBox.setValue(findAccount(accounts, item.fromAccountId()));
         toBox.setValue(findAccount(accounts, item.toAccountId()));
+        websiteField.setText(item.website());
     }
 
     /**
@@ -168,7 +172,7 @@ public final class ItemDialog extends FormDialog<ScheduledItem> {
         }
         BigDecimal amount = rule == PaymentRule.FIXED ? Format.parseMoney(amountField.getText(), "Amount") : null;
         return new ScheduledItem(id, nameField.getText(), category, amount, rule, frequency, firstDate, endDate,
-                fromId, toId, paidThrough);
+                fromId, toId, paidThrough, websiteField.getText());
     }
 
     private static Account findAccount(List<Account> accounts, Integer id) {

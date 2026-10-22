@@ -45,6 +45,8 @@ import java.util.Objects;
  * @param fromAccountId account money comes out of, or null for income
  * @param toAccountId   account money goes into, or null for bills
  * @param paidThrough   occurrences on or before this date are already paid. null = nothing marked paid yet
+ * @param website       optional link to check or pay it online, e.g. "https://myelectric.com". null = none.
+ *                      Missing in older data files
  */
 public record ScheduledItem(
         int id,
@@ -57,9 +59,18 @@ public record ScheduledItem(
         LocalDate endDate,
         Integer fromAccountId,
         Integer toAccountId,
-        LocalDate paidThrough) {
+        LocalDate paidThrough,
+        String website) {
 
     private static final BigDecimal MONTHS_PER_YEAR = BigDecimal.valueOf(12);
+
+    /** An item without a website. */
+    public ScheduledItem(int id, String name, Category category, BigDecimal amount, PaymentRule paymentRule,
+                         Frequency frequency, LocalDate firstDate, LocalDate endDate, Integer fromAccountId,
+                         Integer toAccountId, LocalDate paidThrough) {
+        this(id, name, category, amount, paymentRule, frequency, firstDate, endDate, fromAccountId, toAccountId,
+                paidThrough, null);
+    }
 
     /** A new, uncategorized, fixed-amount item that hasn't been paid yet. Handy in tests. */
     public ScheduledItem(int id, String name, BigDecimal amount, Frequency frequency, LocalDate firstDate,
@@ -124,6 +135,7 @@ public record ScheduledItem(
             amount = null; // the forecast works it out each time
         }
         name = name.trim();
+        website = Websites.clean(website);
     }
 
     /** Income, bill or transfer, based on which side has an account. */
@@ -188,13 +200,13 @@ public record ScheduledItem(
     /** Same item with a different id. Used when a new item is first saved. */
     public ScheduledItem withId(int newId) {
         return new ScheduledItem(newId, name, category, amount, paymentRule, frequency, firstDate, endDate,
-                fromAccountId, toAccountId, paidThrough);
+                fromAccountId, toAccountId, paidThrough, website);
     }
 
     /** Same item with a different fixed amount. Used when you type a new amount into the Bills list. */
     public ScheduledItem withAmount(BigDecimal newAmount) {
         return new ScheduledItem(id, name, category, newAmount, paymentRule, frequency, firstDate, endDate,
-                fromAccountId, toAccountId, paidThrough);
+                fromAccountId, toAccountId, paidThrough, website);
     }
 
     /**
@@ -203,13 +215,13 @@ public record ScheduledItem(
      */
     public ScheduledItem withPaymentRule(PaymentRule rule) {
         return new ScheduledItem(id, name, category, amount, rule, frequency, firstDate, endDate,
-                fromAccountId, toAccountId, paidThrough);
+                fromAccountId, toAccountId, paidThrough, website);
     }
 
     /** Same item, now paying a fixed {@code fixedAmount} each time (e.g. switching off the card minimum). */
     public ScheduledItem withFixedAmount(BigDecimal fixedAmount) {
         return new ScheduledItem(id, name, category, fixedAmount, PaymentRule.FIXED, frequency, firstDate,
-                endDate, fromAccountId, toAccountId, paidThrough);
+                endDate, fromAccountId, toAccountId, paidThrough, website);
     }
 
     /**
@@ -218,12 +230,12 @@ public record ScheduledItem(
      */
     public ScheduledItem withToAccountId(Integer accountId) {
         return new ScheduledItem(id, name, category, amount, paymentRule, frequency, firstDate, endDate,
-                fromAccountId, accountId, paidThrough);
+                fromAccountId, accountId, paidThrough, website);
     }
 
     /** Same item, with everything up to and including {@code date} marked as paid. */
     public ScheduledItem withPaidThrough(LocalDate date) {
         return new ScheduledItem(id, name, category, amount, paymentRule, frequency, firstDate, endDate,
-                fromAccountId, toAccountId, date);
+                fromAccountId, toAccountId, date, website);
     }
 }

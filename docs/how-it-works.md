@@ -34,7 +34,8 @@ The Bills & Income tab groups everything by **category**, using a standard budge
 - **Search** filters as you type (name, category or account). **All / Bills / Income / Transfers** narrows the list further.
 - **Click an amount** to change it. Enter saves, Esc cancels.
 - **Double-click** a bill to edit everything, including its category.
-- **Right-click** a bill for Edit / Mark paid / Delete, or press **Delete**.
+- **Right-click** a bill for Open website / Edit / Mark paid / Delete, or press **Delete**.
+- Give a bill a **Website** (in its Edit window, e.g. myelectric.com) and it shows as a link on the Bills tab and on the Forecast checklist: one click opens it in your browser, to check whether it went through or to pay it.
 - Click a group header to collapse it. It stays collapsed until you open it again.
 
 ## Paying bills

@@ -104,6 +104,19 @@ class FinanceServiceTest {
     }
 
     @Test
+    void aBillsWebsiteSurvivesARestart() {
+        Path file = tempDir.resolve("data.json");
+        FinanceService first = new FinanceService(new JsonDataStore(file));
+        Account checking = first.addAccount(checking("0"));
+        first.addItem(new ScheduledItem(0, "Electric", null, new BigDecimal("90"), null, Frequency.MONTHLY,
+                LocalDate.of(2026, 1, 1), null, checking.id(), null, null, "myelectric.com"));
+
+        FinanceService reopened = new FinanceService(new JsonDataStore(file));
+
+        assertEquals("https://myelectric.com", reopened.items().get(0).website());
+    }
+
+    @Test
     void categoryAndAmountEditsAreSaved() {
         Path file = tempDir.resolve("data.json");
         FinanceService first = new FinanceService(new JsonDataStore(file));

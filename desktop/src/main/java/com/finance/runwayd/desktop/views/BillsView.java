@@ -6,6 +6,7 @@ import com.finance.runwayd.core.model.Category;
 import com.finance.runwayd.core.model.ScheduledItem;
 import com.finance.runwayd.core.model.ScheduledItem.Kind;
 import com.finance.runwayd.desktop.ui.Alerts;
+import com.finance.runwayd.desktop.ui.Browser;
 import com.finance.runwayd.desktop.ui.Format;
 import com.finance.runwayd.desktop.Refreshable;
 import com.finance.runwayd.desktop.ui.Tables;
@@ -67,7 +68,7 @@ import java.util.stream.Collectors;
  *   <li>Click a group's header to collapse or expand it.</li>
  *   <li>Click an amount to change it. Enter saves, Esc cancels.</li>
  *   <li>Double-click a bill to edit everything about it.</li>
- *   <li>Right-click a bill for Edit / Mark paid / Undo last mark paid / Delete, or press Delete to remove it.</li>
+ *   <li>Right-click a bill for Open website / Edit / Mark paid / Undo last mark paid / Delete, or press Delete to remove it.</li>
  *   <li>After "Mark paid", the bar under the list offers Undo. A bill marked paid ahead shows a small
  *       Undo button next to it, and marking one a month or more ahead asks first.</li>
  * </ul>
@@ -263,6 +264,7 @@ public final class BillsView extends BorderPane implements Refreshable {
         table.getColumns().add(width(170, Tables.text("How often", item -> item.frequency().label())));
         table.getColumns().add(width(120, Tables.date("Next due", item -> service.nextDue(item).orElse(null))));
         table.getColumns().add(width(200, Tables.text("Account", this::accountText)));
+        table.getColumns().add(width(150, Tables.link("Website", ScheduledItem::website)));
         table.getColumns().add(width(110, Tables.date("Ends", ScheduledItem::endDate)));
         table.getColumns().add(width(190, payColumn()));
 
@@ -288,17 +290,22 @@ public final class BillsView extends BorderPane implements Refreshable {
             }
         });
 
+        MenuItem openSite = new MenuItem("Open website");
         MenuItem edit = new MenuItem("Edit…");
         MenuItem markPaid = new MenuItem("Mark paid");
         MenuItem undoPaid = new MenuItem("Undo last mark paid");
         MenuItem delete = new MenuItem("Delete");
+        openSite.setOnAction(event -> Browser.open(row.getItem().website()));
         edit.setOnAction(event -> edit(row.getItem()));
         markPaid.setOnAction(event -> markPaid(row.getItem()));
         undoPaid.setOnAction(event -> undoPaid(row.getItem()));
         delete.setOnAction(event -> delete(row.getItem()));
-        ContextMenu menu = new ContextMenu(edit, markPaid, undoPaid, new SeparatorMenuItem(), delete);
-        // Only offer Undo when there's a "mark paid" to take back.
-        menu.setOnShowing(event -> undoPaid.setDisable(row.getItem() == null || !service.canUndoPaid(row.getItem())));
+        ContextMenu menu = new ContextMenu(openSite, edit, markPaid, undoPaid, new SeparatorMenuItem(), delete);
+        // Grey out what doesn't apply: no website to open, or no "mark paid" to take back.
+        menu.setOnShowing(event -> {
+            openSite.setDisable(row.getItem() == null || row.getItem().website() == null);
+            undoPaid.setDisable(row.getItem() == null || !service.canUndoPaid(row.getItem()));
+        });
         // Only offer the menu on rows that actually hold a bill.
         row.emptyProperty().addListener((obs, wasEmpty, isEmpty) -> row.setContextMenu(isEmpty ? null : menu));
         return row;
