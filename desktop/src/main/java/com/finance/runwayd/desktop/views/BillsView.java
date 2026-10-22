@@ -13,6 +13,7 @@ import com.finance.runwayd.desktop.dialogs.ItemDialog;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.ContextMenu;
@@ -168,7 +169,8 @@ public final class BillsView extends BorderPane implements Refreshable {
 
     @Override
     public void refresh() {
-        List<ScheduledItem> all = service.items();
+        // Finished bills from earlier months (e.g. a one-time bill paid last month) are left out.
+        List<ScheduledItem> all = service.items().stream().filter(item -> !service.droppedOff(item)).toList();
         List<ScheduledItem> visible = all.stream().filter(this::matchesFilters).toList();
 
         // EnumMap keeps the groups in the Category order: Income, Housing, Utilities, ...
@@ -355,8 +357,9 @@ public final class BillsView extends BorderPane implements Refreshable {
         column.setCellValueFactory(cell -> new ReadOnlyObjectWrapper<>(cell.getValue()));
         column.setCellFactory(col -> new TableCell<>() {
             private final Button pay = new Button();
+            private final Label done = new Label(); // "Paid Oct 21" or "Ended", when nothing is left to pay
             private final Button undo = new Button("Undo");
-            private final HBox buttons = new HBox(6, pay, undo);
+            private final HBox buttons = new HBox(6, pay, done, undo);
 
             {
                 pay.setOnAction(event -> markPaid(getItem()));
@@ -371,13 +374,32 @@ public final class BillsView extends BorderPane implements Refreshable {
                     setGraphic(null);
                     return;
                 }
-                pay.setText(Format.payButtonText(item));
+                boolean somethingDue = service.nextDue(item).isPresent();
+                Optional<LocalDate> paidOn = service.paidOn(item);
                 Optional<LocalDate> ahead = service.paidAheadTo(item);
-                undo.setVisible(ahead.isPresent());
-                undo.setManaged(ahead.isPresent());
-                ahead.ifPresent(date -> undo.setTooltip(new Tooltip("Marked " + doneWord(item) + " ahead, up to "
-                        + Format.date(date) + ". Click to unmark " + Format.date(date) + ".")));
+
+                // Something to pay: the button. A one-time bill that's paid: "Paid Oct 21" and Undo.
+                // A repeating bill past its end date: "Ended". Never a button that does nothing.
+                pay.setText(Format.payButtonText(item));
+                show(pay, somethingDue);
+                done.setText(paidOn.map(date -> (item.kind() == Kind.INCOME ? "Received " : "Paid ") + Format.date(date))
+                        .orElse("Ended"));
+                show(done, !somethingDue);
+
+                boolean canUndo = paidOn.isPresent() || ahead.isPresent();
+                show(undo, canUndo);
+                if (paidOn.isPresent()) {
+                    undo.setTooltip(new Tooltip("Mark it not " + doneWord(item) + " again."));
+                } else {
+                    ahead.ifPresent(date -> undo.setTooltip(new Tooltip("Marked " + doneWord(item) + " ahead, up to "
+                            + Format.date(date) + ". Click to unmark " + Format.date(date) + ".")));
+                }
                 setGraphic(buttons);
+            }
+
+            private void show(Node node, boolean visible) {
+                node.setVisible(visible);
+                node.setManaged(visible);
             }
         });
         return column;

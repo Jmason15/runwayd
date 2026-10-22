@@ -4,6 +4,7 @@ import com.finance.runwayd.core.Workspace;
 import com.finance.runwayd.core.forecast.Forecasts;
 import com.finance.runwayd.core.forecast.ScheduleCalculator;
 import com.finance.runwayd.core.model.Account;
+import com.finance.runwayd.core.model.Frequency;
 import com.finance.runwayd.core.model.ScheduledItem;
 
 import java.math.BigDecimal;
@@ -132,6 +133,10 @@ public final class Bills {
      * the past, which means it's overdue. Empty if the item has ended.
      */
     public Optional<LocalDate> nextDue(ScheduledItem item) {
+        if (item.frequency() == Frequency.ONCE) {
+            // A one-time bill is due on its date until it's paid, whenever that is.
+            return paidOn(item).isPresent() ? Optional.empty() : Optional.of(item.firstDate());
+        }
         // The balance includes everything before its date; things due on that day still count.
         LocalDate countedAfter = workspace.findAccount(item.mainAccountId())
                 .map(account -> account.balanceDate().minusDays(1))
@@ -202,9 +207,35 @@ public final class Bills {
         if (item.paidThrough() == null) {
             return false;
         }
+        if (item.frequency() == Frequency.ONCE) {
+            return true; // a paid one-time bill can always be put back
+        }
         LocalDate balanceDate = workspace.findAccount(item.mainAccountId())
                 .map(Account::balanceDate).orElse(LocalDate.MIN);
         return !item.paidThrough().isBefore(balanceDate);
+    }
+
+    /**
+     * The day a one-time bill was paid (its date), or empty if it isn't paid yet or repeats.
+     * Shown on the Bills tab as "Paid Oct 21".
+     */
+    public Optional<LocalDate> paidOn(ScheduledItem item) {
+        boolean paid = item.frequency() == Frequency.ONCE && item.paidThrough() != null
+                && !item.firstDate().isAfter(item.paidThrough());
+        return paid ? Optional.of(item.firstDate()) : Optional.empty();
+    }
+
+    /**
+     * True if the bill is finished (nothing left due) and its month is over, so the Bills tab leaves
+     * it out: a one-time bill paid last month, or a repeating bill whose end date was last month.
+     * It isn't deleted; it just stops cluttering the list. This month's stay, so a mis-click can be undone.
+     */
+    public boolean droppedOff(ScheduledItem item, LocalDate today) {
+        if (nextDue(item).isPresent()) {
+            return false;
+        }
+        LocalDate finished = paidOn(item).orElse(item.endDate());
+        return finished != null && finished.isBefore(today.withDayOfMonth(1));
     }
 
     /**

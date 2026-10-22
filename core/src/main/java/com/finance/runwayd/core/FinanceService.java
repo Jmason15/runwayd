@@ -166,6 +166,16 @@ public final class FinanceService {
         return bills.canUndoPaid(item);
     }
 
+    /** The day a one-time bill was paid, if it is (see Bills). */
+    public Optional<LocalDate> paidOn(ScheduledItem item) {
+        return bills.paidOn(item);
+    }
+
+    /** True if the Bills tab should leave this finished bill out now (see Bills). */
+    public boolean droppedOff(ScheduledItem item) {
+        return bills.droppedOff(item, LocalDate.now());
+    }
+
     public Optional<LocalDate> undoLastPaid(int itemId) {
         return bills.undoLastPaid(itemId);
     }
