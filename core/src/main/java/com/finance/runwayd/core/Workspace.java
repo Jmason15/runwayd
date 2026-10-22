@@ -7,7 +7,9 @@ import com.finance.runwayd.core.model.ScheduledItem;
 import com.finance.runwayd.core.storage.ChangedElsewhereException;
 import com.finance.runwayd.core.storage.DataStore;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.ToIntFunction;
@@ -29,6 +31,7 @@ public final class Workspace {
     private final List<ScheduledItem> items;
     private Budget budget;
     private boolean rollPaidOffPayments;
+    private LocalDate trackingSince; // see trackingSince()
 
     private long version;
 
@@ -47,6 +50,9 @@ public final class Workspace {
         items.addAll(data.items());
         budget = data.budget();
         rollPaidOffPayments = data.rollPaidOffPayments();
+        // Older files don't have it: start from the earliest balance date, as that's when tracking began.
+        // Worked out here, on load, so a later balance update can't move it.
+        trackingSince = data.trackingSince() != null ? data.trackingSince() : earliestBalanceDate();
     }
 
     /** The accounts, in the order they were added. Changes to this list are saved by {@link #save()}. */
@@ -78,6 +84,25 @@ public final class Workspace {
     }
 
     /**
+     * The day runwayd started counting. From then on, every bill, paycheck and budget split counts as
+     * not done until you tick it, even if you've updated a balance since. Anything earlier never counts.
+     * Null only for a budget with no accounts yet; the first account's balance date becomes it.
+     * (If a balance is ever entered as of an even older day, counting starts from that day instead.)
+     */
+    public LocalDate trackingSince() {
+        LocalDate earliest = earliestBalanceDate();
+        if (trackingSince == null || (earliest != null && earliest.isBefore(trackingSince))) {
+            return earliest;
+        }
+        return trackingSince;
+    }
+
+    /** The oldest balance date of any account, or null if there are no accounts. */
+    private LocalDate earliestBalanceDate() {
+        return accounts.stream().map(Account::balanceDate).min(Comparator.naturalOrder()).orElse(null);
+    }
+
+    /**
      * Writes everything to the data file, and tells caches the data changed.
      *
      * @throws ChangedElsewhereException if a shared budget was saved on another computer since it was
@@ -85,8 +110,11 @@ public final class Workspace {
      */
     public void save() {
         version++;
+        if (trackingSince == null) {
+            trackingSince = earliestBalanceDate(); // a new budget's first account
+        }
         try {
-            store.save(new FinanceData(accounts, items, budget, rollPaidOffPayments));
+            store.save(new FinanceData(accounts, items, budget, rollPaidOffPayments, trackingSince));
         } catch (ChangedElsewhereException e) {
             takeFrom(store.load()); // show their version instead of the change that couldn't be saved
             throw e;

@@ -123,6 +123,25 @@ class ForecasterTest {
 
     // ---- small builders so each test reads like a sentence ----
 
+    @Test
+    void anUntickedBillFromBeforeTheBalanceUpdateStillCounts() {
+        // Tracking began Jan 1; the balance was updated Jan 10; the Jan 5 bill was never ticked.
+        Account checking = new Account(CHECKING, "Checking", AccountType.CHECKING, new BigDecimal("1000.00"),
+                LocalDate.of(2026, 1, 10), null);
+        ScheduledItem unticked = bill("Groceries", "200.00", Frequency.ONCE, LocalDate.of(2026, 1, 5));
+        ScheduledItem ticked = bill("Phone", "50.00", Frequency.ONCE, LocalDate.of(2026, 1, 6))
+                .withPaidThrough(LocalDate.of(2026, 1, 6));
+        ScheduledItem beforeTracking = bill("Old", "75.00", Frequency.ONCE, LocalDate.of(2025, 12, 20));
+
+        Forecast forecast = forecaster.run(List.of(checking), List.of(unticked, ticked, beforeTracking), List.of(),
+                LocalDate.of(2026, 1, 31), false, START);
+
+        // Only the unticked one since tracking began comes out.
+        assertEquals(new BigDecimal("800.00"), forecast.balanceOf(CHECKING));
+        // It hits the balance as it is now, so the low point is dated the balance update, not before it.
+        assertEquals(LocalDate.of(2026, 1, 10), forecast.lowPointOf(CHECKING).orElseThrow().date());
+    }
+
     private static Account cash(int id, String balance) {
         return new Account(id, "Checking", AccountType.CHECKING, new BigDecimal(balance), START, null);
     }

@@ -55,15 +55,18 @@ public final class Checklist {
         LocalDate firstOfMonth = first.atDay(1);
         LocalDate endOfLast = last.atEndOfMonth();
         List<ChecklistItem> checklist = new ArrayList<>();
+        // Nothing before tracking began counts, so it isn't listed (ticked or not).
+        LocalDate since = workspace.trackingSince() != null ? workspace.trackingSince() : firstOfMonth;
+        // Look back to that day too, for ones from earlier months still not ticked.
+        LocalDate from = since.isBefore(firstOfMonth) ? since : firstOfMonth;
         for (ScheduledItem item : workspace.items()) {
-            LocalDate balanceDate = workspace.findAccount(item.mainAccountId())
-                    .map(Account::balanceDate).orElse(firstOfMonth);
-            // Look back to the balance date too, for unpaid ones from earlier months.
-            LocalDate from = balanceDate.isBefore(firstOfMonth) ? balanceDate : firstOfMonth;
             // Ask for every date, ticked or not (the schedule normally skips the ticked ones).
             for (LocalDate date : ScheduleCalculator.datesBetween(item.withPaidThrough(null), from.minusDays(1),
                     endOfLast)) {
-                ChecklistItem.Status status = statusOf(item, date, balanceDate, today);
+                if (date.isBefore(since)) {
+                    continue;
+                }
+                ChecklistItem.Status status = statusOf(item, date, today);
                 boolean inRange = !date.isBefore(firstOfMonth);
                 if (inRange || status == ChecklistItem.Status.OVERDUE) {
                     checklist.add(new ChecklistItem(item, date, status));
@@ -96,11 +99,6 @@ public final class Checklist {
         return withBalances;
     }
 
-    /**
-     * Ticked (PAID) only if you ticked it; nothing else ticks a bill. A bill from before the account's
-     * last balance update that you haven't ticked is BEFORE_BALANCE_UPDATE: shown unticked, but not
-     * counted in the forecast, since the balance you typed in already includes it.
-     */
     /** The account a line comes out of (or, for income, goes into): the budget's account for a bucket line. */
     private int accountOf(ChecklistItem entry) {
         if (entry.isBudgetSplit()) {
@@ -132,13 +130,14 @@ public final class Checklist {
         return found;
     }
 
-    private static ChecklistItem.Status statusOf(ScheduledItem item, LocalDate date, LocalDate balanceDate,
-                                                 LocalDate today) {
+    /**
+     * Ticked (PAID) only if you ticked it; nothing else ticks a bill, and nothing assumes it's paid.
+     * Updating a balance doesn't either: an unticked bill from before then is still OVERDUE, and still
+     * counted in the forecast, until you tick it.
+     */
+    private static ChecklistItem.Status statusOf(ScheduledItem item, LocalDate date, LocalDate today) {
         if (item.paidThrough() != null && !date.isAfter(item.paidThrough())) {
             return ChecklistItem.Status.PAID;
-        }
-        if (date.isBefore(balanceDate)) {
-            return ChecklistItem.Status.BEFORE_BALANCE_UPDATE;
         }
         if (date.isBefore(today)) {
             return ChecklistItem.Status.OVERDUE;

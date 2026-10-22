@@ -3,6 +3,7 @@ package com.finance.runwayd.core.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -12,6 +13,9 @@ import java.util.List;
  * @param budget the Budget tab settings. Missing in older data files; then a starter budget is used.
  * @param rollPaidOffPayments the Debt tab's "Roll paid-off payments into the next debt" switch.
  *                            Missing in older data files; then on
+ * @param trackingSince    the day runwayd started counting bills. Every bill and paycheck from then on counts
+ *                         as not paid until you tick it, even after a balance update; earlier ones never count.
+ *                         Missing in older data files; then the earliest balance date is used (see Workspace)
  * @param budgets          only read, from files saved by a short-lived version that kept several
  *                         paycheck splits in one file. The one named {@code activeBudget} (or the
  *                         first) becomes {@code budget}. Always null once loaded, so never written back
@@ -20,6 +24,7 @@ import java.util.List;
  */
 public record FinanceData(List<Account> accounts, List<ScheduledItem> items, Budget budget,
                           Boolean rollPaidOffPayments,
+                          @JsonInclude(JsonInclude.Include.NON_NULL) LocalDate trackingSince,
                           @JsonInclude(JsonInclude.Include.NON_NULL) List<SplitFromOlderVersion> budgets,
                           @JsonInclude(JsonInclude.Include.NON_NULL) String activeBudget,
                           @JsonInclude(JsonInclude.Include.NON_NULL) Boolean budgetInForecast) {
@@ -49,13 +54,13 @@ public record FinanceData(List<Account> accounts, List<ScheduledItem> items, Bud
 
     /** What the app saves. */
     public FinanceData(List<Account> accounts, List<ScheduledItem> items, Budget budget,
-                       Boolean rollPaidOffPayments) {
-        this(accounts, items, budget, rollPaidOffPayments, null, null, null);
+                       Boolean rollPaidOffPayments, LocalDate trackingSince) {
+        this(accounts, items, budget, rollPaidOffPayments, trackingSince, null, null, null);
     }
 
     /** A brand-new budget with nothing entered yet. */
     public static FinanceData empty() {
-        return new FinanceData(List.of(), List.of(), null, null);
+        return new FinanceData(List.of(), List.of(), null, null, null);
     }
 
     /** The split that was in use (or the first), as the single Budget this version keeps. */

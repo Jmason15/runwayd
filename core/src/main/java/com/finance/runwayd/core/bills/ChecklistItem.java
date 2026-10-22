@@ -55,11 +55,6 @@ public record ChecklistItem(ScheduledItem item, BudgetBucket bucket, BigDecimal 
     public enum Status {
         /** You ticked it off. The forecast doesn't count it any more. */
         PAID("Paid"),
-        /**
-         * Due before your last balance update and not ticked. Shown unticked (only you tick things), but
-         * not counted in the forecast: the balance you typed in already includes it.
-         */
-        BEFORE_BALANCE_UPDATE("Before balance update"),
         /** Due before today and not ticked off yet. */
         OVERDUE("Overdue"),
         /** Due today and not ticked off yet. */

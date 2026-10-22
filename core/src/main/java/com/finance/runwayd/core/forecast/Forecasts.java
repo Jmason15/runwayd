@@ -33,7 +33,7 @@ public final class Forecasts {
     public Forecast on(LocalDate date) {
         List<BudgetMove> budgetMoves = budgetPlans.inForecast() ? budgetPlans.moves(date) : List.of();
         return forecaster.run(workspace.accounts(), workspace.items(), budgetMoves, date,
-                workspace.rollPaidOffPayments());
+                workspace.rollPaidOffPayments(), workspace.trackingSince());
     }
 
     /** Today's balances, worked out once and reused until something changes. */

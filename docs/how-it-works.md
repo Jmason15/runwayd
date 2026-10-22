@@ -48,13 +48,15 @@ Mistakes are easy to take back:
 - A bill marked paid **ahead** (its paid date is still in the future) shows a small **Undo** button next to Mark paid. Each click un-marks the latest date, so four clicks too many take four Undos. Right-click → **Undo last mark paid** does the same.
 - Marking something that's a month or more away asks first ("Next date is Feb 15, 2027, about 4 months from now…"), so extra clicks can't quietly skip months of bills or paychecks.
 
-A balance you enter counts everything due **before** its date. Bills due **on** that day (e.g. today) still count until you tick them off, since they may not have cleared yet. The list also shows each line's **Account** and the **Balance after**: what that account will hold right after the bill is paid (or the paycheck lands, or the budget transfer goes out), straight from the forecast. Lines on the same day are in the order the forecast applies them, so the balances read top to bottom. Ticked bills and bills from before the last balance update show no balance, since they aren't coming out again.
+**Nothing is assumed paid until you tick it.** Updating a balance doesn't tick anything: a bill you haven't ticked keeps counting, even if its date is before the balance update, since it may not have come out yet. So to catch up after a while: update the balances, then tick what you can see went through. Anything you can't confirm stays on the list as still to pay. (If you forget to tick something that did clear, the forecast just shows a bit less money than you have, the safe direction.)
 
-**A box is only ever ticked by you.** Tick a bill when it's paid and it's removed from every calculation; untick it to put it back. Ticked bills from earlier months drop off the list. Bills due before your last balance update stay unticked (status "Before balance update") until you tick them, but the forecast doesn't subtract them again, because the balance you typed in already includes them.
+Counting starts the day you began tracking: the earliest balance date when the budget was set up (saved in the budget file as `trackingSince`). Bills from before then never count and aren't listed. The list also shows each line's **Account** and the **Balance after**: what that account will hold right after the bill is paid (or the paycheck lands, or the budget transfer goes out), straight from the forecast. Lines on the same day are in the order the forecast applies them, so the balances read top to bottom. Ticked bills show no balance, since they aren't coming out again.
+
+**A box is only ever ticked by you.** Tick a bill when it's paid and it's removed from every calculation; untick it to put it back. Ticked bills from earlier months drop off the list; unticked ones stay, month after month, until you tick them. Budget splits work the same way.
 
 No payment history is kept. Each bill only remembers a `paidThrough` date. Balances aren't changed either, since you update those yourself from your bank.
 
-A bill shows as **Overdue** if its date has passed, it isn't ticked, and it's on or after your last balance update. If it already cleared your bank, tick it or update the balance; either makes it go away.
+A bill shows as **Overdue** if its date has passed and it isn't ticked. It counts in the forecast until you tick it. If it already cleared your bank, tick it.
 
 ## Debt
 

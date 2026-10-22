@@ -37,7 +37,7 @@ class ChecklistTest {
     @BeforeEach
     void setUp() {
         service = new FinanceService(new JsonDataStore(tempDir.resolve("data.json")));
-        // Balance updated today: anything due before today is already in it.
+        // Tracking starts today. Tests about earlier bills use startedTrackingDaysAgo.
         checking = service.addAccount(new Account(0, "Checking", AccountType.CHECKING,
                 new BigDecimal("2000.00"), today, null));
     }
@@ -68,20 +68,6 @@ class ChecklistTest {
     }
 
     @Test
-    void billsBeforeTheBalanceUpdateAreNeverTickedForYou() {
-        // Only meaningful when today isn't the 1st: a bill earlier this month is already in today's balance.
-        if (today.getDayOfMonth() == 1) {
-            return;
-        }
-        ScheduledItem rent = bill("Rent", "900.00", today.withDayOfMonth(1));
-
-        ChecklistItem entry = entryFor(rent, today.withDayOfMonth(1));
-
-        assertEquals(Status.BEFORE_BALANCE_UPDATE, entry.status());
-        assertFalse(entry.isDone(), "only you tick things");
-    }
-
-    @Test
     void unpaidBillsFromBeforeThisMonthStayOnTheList() {
         // Balance from 40 days ago; a bill 35 days ago was never ticked off.
         service.updateBalance(checking.id(), new BigDecimal("2000.00"), today.minusDays(40));
@@ -101,23 +87,25 @@ class ChecklistTest {
         assertEquals(Status.UPCOMING, entryFor(internet, today.plusDays(1)).status());
     }
 
-    // ---- "checked without us checking it": bills from before a balance update ----
+    // ---- a balance update never counts a bill as paid ----
 
     @Test
-    void updatingTheBalanceNeverTicksABill() {
-        // The report: after a balance update, earlier bills looked ticked though nobody ticked them.
+    void anUntickedBillStillCountsAfterABalanceUpdate() {
+        // The rule: nothing is assumed paid until you tick it, even if the balance was updated since.
+        startedTrackingDaysAgo(10);
         ScheduledItem lunch = bill("School Lunch", "31.48", today.minusDays(3));
 
         ChecklistItem entry = lunchEntry(lunch);
 
         assertFalse(entry.isDone(), "not ticked: nobody ticked it");
-        assertEquals("Before balance update", entry.status().toString());
-        assertEquals(new BigDecimal("2000.00"), service.forecast(today).balanceOf(checking.id()),
-                "not subtracted again: the balance typed in today already includes it");
+        assertEquals(Status.OVERDUE, entry.status());
+        assertEquals(new BigDecimal("1968.52"), service.forecast(today).balanceOf(checking.id()),
+                "still counted: it may not have come out yet");
     }
 
     @Test
     void youCanTickAndUntickItAndTheForecastStaysRight() {
+        startedTrackingDaysAgo(10);
         ScheduledItem lunch = bill("School Lunch", "31.48", today.minusDays(3));
 
         service.setPaid(lunch.id(), today.minusDays(3), true);
@@ -125,8 +113,29 @@ class ChecklistTest {
         assertEquals(new BigDecimal("2000.00"), service.forecast(today).balanceOf(checking.id()));
 
         service.setPaid(lunch.id(), today.minusDays(3), false);
-        assertEquals(Status.BEFORE_BALANCE_UPDATE, lunchEntry(lunch).status());
+        assertEquals(Status.OVERDUE, lunchEntry(lunch).status());
+        assertEquals(new BigDecimal("1968.52"), service.forecast(today).balanceOf(checking.id()));
+    }
+
+    @Test
+    void billsFromBeforeTrackingBeganArentListedOrCounted() {
+        // Tracking began today, so a bill 3 days ago is history: not on the list, not in the forecast.
+        ScheduledItem lunch = bill("School Lunch", "31.48", today.minusDays(3));
+
+        boolean listed = service.checklist(YearMonth.from(today.minusDays(3)), YearMonth.from(today)).stream()
+                .anyMatch(e -> !e.isBudgetSplit() && e.item().id() == lunch.id() && e.date().equals(today.minusDays(3)));
+
+        assertFalse(listed);
         assertEquals(new BigDecimal("2000.00"), service.forecast(today).balanceOf(checking.id()));
+    }
+
+    @Test
+    void theTrackingStartIsSavedAndBalanceUpdatesDontMoveIt() {
+        startedTrackingDaysAgo(10);
+        service.updateBalance(checking.id(), new BigDecimal("1500.00"), today);
+
+        FinanceService reopened = new FinanceService(new JsonDataStore(tempDir.resolve("tracked.json")));
+        assertEquals(today.minusDays(10), reopened.trackingSince());
     }
 
     @Test
@@ -215,6 +224,17 @@ class ChecklistTest {
     }
 
     // ---- helpers ----
+
+    /**
+     * A budget that started tracking {@code days} ago, with the balance updated to $2,000 today, so
+     * there's room for bills between the two.
+     */
+    private void startedTrackingDaysAgo(int days) {
+        service = new FinanceService(new JsonDataStore(tempDir.resolve("tracked.json")));
+        checking = service.addAccount(new Account(0, "Checking", AccountType.CHECKING,
+                new BigDecimal("2000.00"), today.minusDays(days), null));
+        service.updateBalance(checking.id(), new BigDecimal("2000.00"), today);
+    }
 
     private ScheduledItem bill(String name, String amount, LocalDate first) {
         return service.addItem(new ScheduledItem(0, name, new BigDecimal(amount), Frequency.MONTHLY, first, null,

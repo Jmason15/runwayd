@@ -18,7 +18,9 @@ import java.util.Map;
  * <p>How it works, in plain steps:
  * <ol>
  *   <li>Start each account at the balance you last entered.</li>
- *   <li>List every bill, paycheck, transfer and interest charge between then and the target date.</li>
+ *   <li>List every bill, paycheck, transfer and interest charge up to the target date that isn't ticked off,
+ *       starting from the day tracking began. A bill that's due before an account's last balance update
+ *       still counts if it isn't ticked: nothing is assumed paid until you say so.</li>
  *   <li>Sort them by date. On the same day, income goes first so a payday doesn't look like an overdraft.</li>
  *   <li>Apply them one at a time, writing down each account's new balance as we go.</li>
  * </ol>
@@ -67,7 +69,17 @@ public final class Forecaster {
      */
     public Forecast run(List<Account> accounts, List<ScheduledItem> items, List<BudgetMove> budgetMoves,
                         LocalDate through, boolean rollPaidOffPayments) {
-        return new Run(accounts, through, rollPaidOffPayments).play(items, budgetMoves);
+        return run(accounts, items, budgetMoves, through, rollPaidOffPayments, null);
+    }
+
+    /**
+     * The same, counting from {@code trackingSince}: every occurrence from that day on that isn't ticked
+     * off is counted, even one due before its account's balance date (it may not have cleared yet).
+     * Null means the earliest balance date.
+     */
+    public Forecast run(List<Account> accounts, List<ScheduledItem> items, List<BudgetMove> budgetMoves,
+                        LocalDate through, boolean rollPaidOffPayments, LocalDate trackingSince) {
+        return new Run(accounts, through, rollPaidOffPayments, trackingSince).play(items, budgetMoves);
     }
 
     /**
@@ -78,6 +90,7 @@ public final class Forecaster {
         private final Map<Integer, Account> accountsById = new LinkedHashMap<>();
         private final LocalDate through;
         private final boolean rollPaidOffPayments; // see Forecaster.run
+        private final LocalDate countFrom;          // nothing before this day is counted (see appliesTo)
 
         // These fill in as events are applied, and become the Forecast at the end.
         private final Map<Integer, BigDecimal> balances = new LinkedHashMap<>();
@@ -88,9 +101,13 @@ public final class Forecaster {
         // Each debt's regular payment at the start, so we know how much rolls over when it's paid off.
         private final Map<Integer, BigDecimal> regularPayments = new HashMap<>();
 
-        Run(List<Account> accounts, LocalDate through, boolean rollPaidOffPayments) {
+        Run(List<Account> accounts, LocalDate through, boolean rollPaidOffPayments, LocalDate trackingSince) {
             this.through = through;
             this.rollPaidOffPayments = rollPaidOffPayments;
+            LocalDate earliestBalance = accounts.stream().map(Account::balanceDate)
+                    .min(Comparator.naturalOrder()).orElse(through);
+            // Never later than the earliest balance, so an account entered as of an older date still counts from it.
+            this.countFrom = trackingSince == null || earliestBalance.isBefore(trackingSince) ? earliestBalance : trackingSince;
             for (Account account : accounts) {
                 accountsById.put(account.id(), account);
                 balances.put(account.id(), account.balance());
@@ -123,12 +140,8 @@ public final class Forecaster {
             if (accountsById.isEmpty()) {
                 return List.of();
             }
-            // Start from the oldest balance we know about (including that day itself). Each account
-            // still ignores events before its own balance date (see appliesTo).
-            LocalDate start = accountsById.values().stream()
-                    .map(Account::balanceDate)
-                    .min(Comparator.naturalOrder())
-                    .orElseThrow();
+            // Start the day tracking began (including that day itself). Ticked dates are skipped by the schedule.
+            LocalDate start = countFrom;
 
             List<Event> events = new ArrayList<>();
             for (ScheduledItem item : items) {
@@ -333,17 +346,21 @@ public final class Forecaster {
             } else {
                 Forecast.LowPoint low = lowPoints.get(account.id());
                 if (newBalance.compareTo(low.balance()) < 0) {
-                    lowPoints.put(account.id(), new Forecast.LowPoint(newBalance, date));
+                    // An unticked bill from before the balance update hits the balance as it is now, so the
+                    // low comes no earlier than the balance date.
+                    LocalDate when = date.isBefore(account.balanceDate()) ? account.balanceDate() : date;
+                    lowPoints.put(account.id(), new Forecast.LowPoint(newBalance, when));
                 }
             }
         }
 
         /**
-         * An account's stored balance includes everything BEFORE its balance date. Things due ON
-         * that day still count, until you tick them off, since they may not have cleared yet.
+         * True if something on {@code date} changes {@code account}: anything from the day tracking
+         * began. Not just from the account's balance date: a bill you haven't ticked still counts after
+         * a balance update, because it's only assumed paid once you tick it.
          */
-        private static boolean appliesTo(Account account, LocalDate date) {
-            return !date.isBefore(account.balanceDate());
+        private boolean appliesTo(Account account, LocalDate date) {
+            return !date.isBefore(countFrom);
         }
     }
 

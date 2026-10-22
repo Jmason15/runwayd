@@ -182,9 +182,9 @@ public final class BudgetPlans {
 
     /**
      * The plan for every paycheck up to {@code through} (or a year, whichever is later), showing
-     * the first {@code howMany}. It starts at the budget account's last balance update rather than
-     * today: a payday since then whose buckets aren't ticked off still counts, like an unpaid bill,
-     * until you tick them or update the balance.
+     * the first {@code howMany}. It starts the day tracking began rather than today: a payday since
+     * then whose buckets aren't ticked off still counts, like an unpaid bill, until you tick them.
+     * Updating the balance doesn't tick them.
      */
     public BudgetPlan planThrough(LocalDate through, int howMany) {
         Budget budget = workspace.budget();
@@ -198,7 +198,8 @@ public final class BudgetPlans {
                 .map(ScheduledItem::id)
                 .collect(Collectors.toSet());
         LocalDate today = LocalDate.now();
-        LocalDate start = account.get().balanceDate().isBefore(today) ? account.get().balanceDate() : today;
+        LocalDate since = workspace.trackingSince() != null ? workspace.trackingSince() : account.get().balanceDate();
+        LocalDate start = since.isBefore(today) ? since : today;
         LocalDate evenOutUntil = through.isAfter(today.plusMonths(EVEN_OUT_MONTHS))
                 ? through
                 : today.plusMonths(EVEN_OUT_MONTHS);
@@ -210,7 +211,7 @@ public final class BudgetPlans {
         }
         BudgetPlan full = cache.computeIfAbsent(start + "|" + evenOutUntil, key -> {
             Forecast withoutBudget = forecaster.run(workspace.accounts(), workspace.items(), List.of(), lookaheadEnd,
-                    workspace.rollPaidOffPayments());
+                    workspace.rollPaidOffPayments(), workspace.trackingSince());
             BudgetPlan first = BudgetPlanner.plan(withoutBudget, account.get(), budget.cushion(), paycheckIds,
                     budget.buckets(), start, evenOutUntil, Integer.MAX_VALUE);
             return topUpWhileSafe(first, paycheckIds, lookaheadEnd, start);
@@ -249,7 +250,7 @@ public final class BudgetPlans {
 
     private Forecast runWith(BudgetPlan plan, LocalDate through) {
         return forecaster.run(workspace.accounts(), workspace.items(), movesFor(plan), through,
-                workspace.rollPaidOffPayments());
+                workspace.rollPaidOffPayments(), workspace.trackingSince());
     }
 
     /**

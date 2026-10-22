@@ -128,8 +128,8 @@ public final class Bills {
     /**
      * The next date of this item that the forecast still counts as unpaid.
      *
-     * <p>That's the first occurrence on or after its account's balance date (earlier
-     * ones are already in the balance) and after its paid-through date. It can be in
+     * <p>That's the first occurrence since tracking began that isn't ticked off (after its paid-through
+     * date). Updating a balance doesn't change it: nothing counts as paid until you tick it. It can be in
      * the past, which means it's overdue. Empty if the item has ended.
      */
     public Optional<LocalDate> nextDue(ScheduledItem item) {
@@ -137,10 +137,7 @@ public final class Bills {
             // A one-time bill is due on its date until it's paid, whenever that is.
             return paidOn(item).isPresent() ? Optional.empty() : Optional.of(item.firstDate());
         }
-        // The balance includes everything before its date; things due on that day still count.
-        LocalDate countedAfter = workspace.findAccount(item.mainAccountId())
-                .map(account -> account.balanceDate().minusDays(1))
-                .orElse(item.firstDate().minusDays(1));
+        LocalDate countedAfter = countedFrom().map(since -> since.minusDays(1)).orElse(item.firstDate().minusDays(1));
         // A little over a year ahead is enough to find the next date of even a yearly bill.
         LocalDate searchUntil = LocalDate.now().plusMonths(13);
         return ScheduleCalculator.datesBetween(item, countedAfter, searchUntil).stream().findFirst();
@@ -200,8 +197,7 @@ public final class Bills {
 
     /**
      * True if the item has a "mark paid" that can still be undone: one that the forecast is
-     * skipping. (Dates before the account's balance date are in that balance already, so
-     * unmarking them would change nothing.)
+     * skipping. (Dates before tracking began never count, so unmarking them would change nothing.)
      */
     public boolean canUndoPaid(ScheduledItem item) {
         if (item.paidThrough() == null) {
@@ -210,9 +206,12 @@ public final class Bills {
         if (item.frequency() == Frequency.ONCE) {
             return true; // a paid one-time bill can always be put back
         }
-        LocalDate balanceDate = workspace.findAccount(item.mainAccountId())
-                .map(Account::balanceDate).orElse(LocalDate.MIN);
-        return !item.paidThrough().isBefore(balanceDate);
+        return !item.paidThrough().isBefore(countedFrom().orElse(LocalDate.MIN));
+    }
+
+    /** The day tracking began: nothing earlier counts (see Workspace.trackingSince). */
+    private Optional<LocalDate> countedFrom() {
+        return Optional.ofNullable(workspace.trackingSince());
     }
 
     /**

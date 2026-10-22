@@ -215,6 +215,11 @@ public final class FinanceService {
         return debts.summary(date);
     }
 
+    /** The day runwayd started counting bills: see {@link Workspace#trackingSince()}. */
+    public LocalDate trackingSince() {
+        return workspace.trackingSince();
+    }
+
     // =========================================================================
     // Budget (see BudgetPlans)
     // =========================================================================

@@ -87,7 +87,7 @@ public final class DemoBudget {
                 new BudgetBucket("Paying down debt", new BigDecimal("50"), Unit.PERCENT, Destination.DEBT, null),
                 new BudgetBucket("Treats", new BigDecimal("20"), Unit.PERCENT)));
 
-        return new FinanceData(accounts, items, budget, true);
+        return new FinanceData(accounts, items, budget, true, null);
     }
 
     /** Adds a fixed-amount item with the next id. */
