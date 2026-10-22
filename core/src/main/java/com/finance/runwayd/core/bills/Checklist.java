@@ -55,11 +55,13 @@ public final class Checklist {
         LocalDate firstOfMonth = first.atDay(1);
         LocalDate endOfLast = last.atEndOfMonth();
         List<ChecklistItem> checklist = new ArrayList<>();
-        // Nothing before tracking began counts, so it isn't listed (ticked or not).
-        LocalDate since = workspace.trackingSince() != null ? workspace.trackingSince() : firstOfMonth;
-        // Look back to that day too, for ones from earlier months still not ticked.
-        LocalDate from = since.isBefore(firstOfMonth) ? since : firstOfMonth;
+        LocalDate trackingSince = workspace.trackingSince() != null ? workspace.trackingSince() : firstOfMonth;
         for (ScheduledItem item : workspace.items()) {
+            // Nothing before tracking began counts, so it isn't listed (ticked or not), unless Undo stepped
+            // this bill back further.
+            LocalDate since = ScheduleCalculator.countsFrom(item, trackingSince);
+            // Look back to that day too, for ones from earlier months still not ticked.
+            LocalDate from = since.isBefore(firstOfMonth) ? since : firstOfMonth;
             // Ask for every date, ticked or not (the schedule normally skips the ticked ones).
             for (LocalDate date : ScheduleCalculator.datesBetween(item.withPaidThrough(null), from.minusDays(1),
                     endOfLast)) {

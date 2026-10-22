@@ -85,22 +85,32 @@ class BillsQaTest extends QaBase {
     }
 
     @Test
-    void everyBillHasAnUndoButtonThatWorksRightThere() {
-        addBill("Electric", "150", "Monthly", inFiveDays);
-        Button undo = undoButton();
-        assertTrue(undo.isVisible(), "Undo is always there");
-        assertTrue(undo.isDisabled(), "but greyed out with nothing marked");
+    void everyBillHasAnUndoButtonThatStepsItBackADate() {
+        // On the 10th, so stepping back a month never lands on a different day.
+        LocalDate due = today.plusMonths(1).withDayOfMonth(10);
+        addBill("Electric", "150", "Monthly", due);
+        assertTrue(undoButton().isVisible(), "Undo is always there");
+        assertFalse(undoButton().isDisabled(), "and works even with nothing marked paid");
 
-        press("Mark paid"); // this month's: not ahead, and Undo still works
-        assertFalse(undoButton().isDisabled());
+        // Mark paid moves it forward a date; Undo moves it back.
+        press("Mark paid");
         clickOn(undoButton());
         settle();
+        assertEquals(Format.date(due), cell(onlyBillTable(), 0, "Next due"), "unpaid again");
 
-        assertEquals(Format.date(inFiveDays), cell(onlyBillTable(), 0, "Next due"), "unpaid again");
-        assertTrue(undoButton().isDisabled(), "nothing left to undo");
-        assertEquals(null, reopened().items().get(0).paidThrough());
-        showBalancesOn(today.plusMonths(1));
-        assertShows("1850", forecastCell("Checking", "On chosen date"), "counted again");
+        // Undo again: the month before it was entered with is owed now too.
+        clickOn(undoButton());
+        settle();
+        assertEquals(Format.date(due.minusMonths(1)), cell(onlyBillTable(), 0, "Next due"));
+        showBalancesOn(due);
+        assertShows("1700", forecastCell("Checking", "On chosen date"), "$2,000 - both months' $150");
+        assertEquals(due.minusMonths(1), reopened().items().get(0).firstDate());
+    }
+
+    @Test
+    void anUnpaidOneTimeBillHasNothingToUndo() {
+        addBill("Repair", "80", "One time", inFiveDays);
+        assertTrue(undoButton().isDisabled(), "greyed out: nothing before it");
     }
 
     @Test

@@ -166,6 +166,11 @@ public final class FinanceService {
         return bills.canUndoPaid(item);
     }
 
+    /** The date Undo would make owed again. See {@link Bills#undoWouldUnpay}. */
+    public Optional<LocalDate> undoWouldUnpay(ScheduledItem item) {
+        return bills.undoWouldUnpay(item);
+    }
+
     /** The day a one-time bill was paid, if it is (see Bills). */
     public Optional<LocalDate> paidOn(ScheduledItem item) {
         return bills.paidOn(item);

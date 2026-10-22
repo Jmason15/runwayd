@@ -90,7 +90,8 @@ public final class Forecaster {
         private final Map<Integer, Account> accountsById = new LinkedHashMap<>();
         private final LocalDate through;
         private final boolean rollPaidOffPayments; // see Forecaster.run
-        private final LocalDate countFrom;          // nothing before this day is counted (see appliesTo)
+        private LocalDate countFrom; // nothing before this day is counted (see appliesTo); lowered by play() for stepped-back bills
+        private LocalDate trackingStart; // the day tracking began, before play() lowers countFrom
 
         // These fill in as events are applied, and become the Forecast at the end.
         private final Map<Integer, BigDecimal> balances = new LinkedHashMap<>();
@@ -119,6 +120,14 @@ public final class Forecaster {
         }
 
         Forecast play(List<ScheduledItem> items, List<BudgetMove> budgetMoves) {
+            // A bill stepped back with Undo past the day tracking began counts from its own, earlier, start.
+            trackingStart = countFrom;
+            for (ScheduledItem item : items) {
+                LocalDate itemStart = ScheduleCalculator.countsFrom(item, trackingStart);
+                if (itemStart.isBefore(countFrom)) {
+                    countFrom = itemStart;
+                }
+            }
             noteRegularPayments(items);
             for (Event event : buildTimeline(items, budgetMoves)) {
                 if (event.isInterest()) {
@@ -140,11 +149,11 @@ public final class Forecaster {
             if (accountsById.isEmpty()) {
                 return List.of();
             }
-            // Start the day tracking began (including that day itself). Ticked dates are skipped by the schedule.
-            LocalDate start = countFrom;
-
+            // Each item from the day tracking began (including that day), or its own earlier start if it's been
+            // stepped back. Ticked dates are skipped by the schedule.
             List<Event> events = new ArrayList<>();
             for (ScheduledItem item : items) {
+                LocalDate start = ScheduleCalculator.countsFrom(item, trackingStart);
                 for (LocalDate date : ScheduleCalculator.datesBetween(item, start.minusDays(1), through)) {
                     events.add(Event.forItem(date, item));
                 }

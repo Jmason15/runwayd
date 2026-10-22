@@ -20,6 +20,37 @@ public final class ScheduleCalculator {
     }
 
     /**
+     * The date one step before the item's first date, e.g. Oct 10 for monthly rent first due Nov 10. Lets
+     * Undo step a bill back past the date it was entered with. Null for a one-time item, or when stepping
+     * back would shift its day of the month (a monthly bill on the 31st), so the schedule never drifts.
+     */
+    public static LocalDate dateBeforeFirst(ScheduledItem item) {
+        LocalDate first = item.firstDate();
+        return switch (item.frequency()) {
+            case ONCE -> null;
+            case TWICE_MONTHLY -> first.getDayOfMonth() > 15 ? first.withDayOfMonth(15)
+                    : first.getDayOfMonth() > 1 ? first.withDayOfMonth(1)
+                    : first.minusMonths(1).withDayOfMonth(15);
+            default -> {
+                LocalDate before = item.frequency().nthDate(first, -1);
+                yield item.frequency().nthDate(before, 1).equals(first) ? before : null;
+            }
+        };
+    }
+
+    /**
+     * The first day this item's dates count from: the day tracking began, or earlier if Undo has stepped
+     * it back past that day (it's then paid only through an earlier date, so the dates after that are owed).
+     */
+    public static LocalDate countsFrom(ScheduledItem item, LocalDate trackingSince) {
+        LocalDate paid = item.paidThrough();
+        if (paid != null && paid.plusDays(1).isBefore(trackingSince)) {
+            return paid.plusDays(1);
+        }
+        return trackingSince;
+    }
+
+    /**
      * Every date the item happens that is strictly AFTER {@code after}
      * and on or before {@code through}.
      *

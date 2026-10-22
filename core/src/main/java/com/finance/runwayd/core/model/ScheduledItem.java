@@ -233,6 +233,12 @@ public record ScheduledItem(
                 fromAccountId, accountId, paidThrough, website);
     }
 
+    /** Same item, starting on a different date. Used when Undo steps a bill back before its first date. */
+    public ScheduledItem withFirstDate(LocalDate date) {
+        return new ScheduledItem(id, name, category, amount, paymentRule, frequency, date, endDate,
+                fromAccountId, toAccountId, paidThrough, website);
+    }
+
     /** Same item, with everything up to and including {@code date} marked as paid. */
     public ScheduledItem withPaidThrough(LocalDate date) {
         return new ScheduledItem(id, name, category, amount, paymentRule, frequency, firstDate, endDate,

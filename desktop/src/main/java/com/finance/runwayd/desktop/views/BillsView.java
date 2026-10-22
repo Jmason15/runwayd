@@ -360,8 +360,8 @@ public final class BillsView extends BorderPane implements Refreshable {
     }
 
     /**
-     * The last column: "Mark paid" (or "Mark received"), and always an "Undo" beside it, so any
-     * mark paid can be taken back right there. It's greyed out when there's nothing to undo.
+     * The last column: "Mark paid" (or "Mark received"), and always an "Undo" beside it that steps the
+     * bill back one date, so what's owed can be adjusted right there. Mark paid moves it forward a date.
      */
     private TableColumn<ScheduledItem, ScheduledItem> payColumn() {
         TableColumn<ScheduledItem, ScheduledItem> column = new TableColumn<>("");
@@ -400,19 +400,13 @@ public final class BillsView extends BorderPane implements Refreshable {
                 show(done, !somethingDue);
 
                 // Undo is always there, in the same spot on every row, so it's quick to find. Each click
-                // unmarks the latest date marked paid; greyed out when nothing is marked.
-                undo.setDisable(!service.canUndoPaid(item));
-                if (paidOn.isPresent()) {
-                    undo.setTooltip(new Tooltip("Mark it not " + doneWord(item) + " again."));
-                } else if (ahead.isPresent()) {
-                    undo.setTooltip(new Tooltip("Marked " + doneWord(item) + " ahead, up to "
-                            + Format.date(ahead.get()) + ". Click to unmark " + Format.date(ahead.get()) + "."));
-                } else if (!undo.isDisabled()) {
-                    undo.setTooltip(new Tooltip("Unmark " + Format.date(item.paidThrough())
-                            + ", so it counts as not " + doneWord(item) + " again."));
-                } else {
-                    undo.setTooltip(null);
-                }
+                // steps the bill back one date: that date counts as not paid again. Greyed out only when
+                // there's no earlier date (e.g. a one-time bill that isn't paid).
+                Optional<LocalDate> stepsBackTo = service.undoWouldUnpay(item);
+                undo.setDisable(stepsBackTo.isEmpty());
+                undo.setTooltip(stepsBackTo.map(date -> new Tooltip("Count " + Format.date(date) + " as not "
+                        + doneWord(item) + " again." + ahead.map(a -> " (Marked ahead up to " + Format.date(a) + ".)")
+                        .orElse(""))).orElse(null));
                 setGraphic(buttons);
             }
 

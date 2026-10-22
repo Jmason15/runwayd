@@ -46,7 +46,7 @@ One-time bills: once marked paid, the button becomes **"Paid Oct 21 [Undo]"** (t
 
 Mistakes are easy to take back:
 - After each Mark paid click, a bar under the list says what was marked, with an **Undo** button.
-- Every bill has an **Undo** button next to Mark paid. Each click un-marks the latest date marked paid, so four clicks too many take four Undos. It's greyed out when nothing is marked. Right-click → **Undo last mark paid** does the same.
+- Every bill has an **Undo** button next to Mark paid. **Mark paid** moves a bill forward one date; **Undo** moves it back one, and that date counts as owed again (it shows as Overdue and comes out of the forecast until you mark it paid). So four clicks too many take four Undos, and Undo also brings back a date that was never marked, even one from before tracking began or before the date the bill was entered with (Rent first due Nov 10: Undo makes Oct 10 owed). It's greyed out only for an unpaid one-time bill. Right-click → **Undo last mark paid** does the same.
 - Marking something that's a month or more away asks first ("Next date is Feb 15, 2027, about 4 months from now…"), so extra clicks can't quietly skip months of bills or paychecks.
 
 **Nothing is assumed paid until you tick it.** Updating a balance doesn't tick anything: a bill you haven't ticked keeps counting, even if its date is before the balance update, since it may not have come out yet. So to catch up after a while: update the balances, then tick what you can see went through. Anything you can't confirm stays on the list as still to pay. (If you forget to tick something that did clear, the forecast just shows a bit less money than you have, the safe direction.)

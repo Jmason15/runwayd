@@ -137,7 +137,9 @@ public final class Bills {
             // A one-time bill is due on its date until it's paid, whenever that is.
             return paidOn(item).isPresent() ? Optional.empty() : Optional.of(item.firstDate());
         }
-        LocalDate countedAfter = countedFrom().map(since -> since.minusDays(1)).orElse(item.firstDate().minusDays(1));
+        LocalDate countedAfter = countedFrom()
+                .map(since -> ScheduleCalculator.countsFrom(item, since).minusDays(1))
+                .orElse(item.firstDate().minusDays(1));
         // A little over a year ahead is enough to find the next date of even a yearly bill.
         LocalDate searchUntil = LocalDate.now().plusMonths(13);
         return ScheduleCalculator.datesBetween(item, countedAfter, searchUntil).stream().findFirst();
@@ -196,17 +198,31 @@ public final class Bills {
     }
 
     /**
-     * True if the item has a "mark paid" that can still be undone: one that the forecast is
-     * skipping. (Dates before tracking began never count, so unmarking them would change nothing.)
+     * True if Undo can do something: there's an earlier date to put back. See {@link #undoWouldUnpay}.
      */
     public boolean canUndoPaid(ScheduledItem item) {
-        if (item.paidThrough() == null) {
-            return false;
-        }
+        return undoWouldUnpay(item).isPresent();
+    }
+
+    /**
+     * The date Undo would make owed again: the one just before the next due date. That's the last date
+     * marked paid, or, if nothing was marked, the date before (e.g. Rent due Nov 10: Undo brings back
+     * Oct 10, even from before tracking began, or from before the date it was entered with). A one-time
+     * bill: its date, if it's marked paid. Empty for an unpaid one-time bill, and at the first date of a bill
+     * on the 29th to 31st whose step back would land on another day.
+     */
+    public Optional<LocalDate> undoWouldUnpay(ScheduledItem item) {
         if (item.frequency() == Frequency.ONCE) {
-            return true; // a paid one-time bill can always be put back
+            return paidOn(item);
         }
-        return !item.paidThrough().isBefore(countedFrom().orElse(LocalDate.MIN));
+        // The next date still owed, or (for a bill that has ended) the day after it ended.
+        LocalDate next = nextDue(item).orElse(item.endDate() == null ? null : item.endDate().plusDays(1));
+        if (next == null) {
+            return Optional.empty();
+        }
+        LocalDate before = previousDate(item, next);
+        // Before its first date? Step back past it (Rent entered as "first due Nov 10" can still go to Oct 10).
+        return Optional.ofNullable(before != null ? before : ScheduleCalculator.dateBeforeFirst(item));
     }
 
     /** The day tracking began: nothing earlier counts (see Workspace.trackingSince). */
@@ -238,19 +254,25 @@ public final class Bills {
     }
 
     /**
-     * Takes back the last "mark paid": the latest date marked paid counts as unpaid again, so the
-     * forecast includes it. Undo again to step back one more.
+     * Steps the bill back one date: the date just before its next due date counts as owed again (see
+     * {@link #undoWouldUnpay}), so the forecast includes it. That takes back the last "mark paid", or, if
+     * nothing was marked, brings back the date before. Undo again to step back one more.
      *
      * @return the date that's unpaid again, or empty if there was nothing to undo
      */
     public Optional<LocalDate> undoLastPaid(int itemId) {
         int index = workspace.indexOfItem(itemId);
         ScheduledItem item = workspace.items().get(index);
-        if (!canUndoPaid(item)) {
+        Optional<LocalDate> toUnpay = undoWouldUnpay(item);
+        if (toUnpay.isEmpty()) {
             return Optional.empty();
         }
-        LocalDate unpaid = item.paidThrough();
-        workspace.items().set(index, item.withPaidThrough(previousDate(item, unpaid)));
+        LocalDate unpaid = toUnpay.get();
+        // Stepping back past its first date moves the first date back to it.
+        ScheduledItem changed = unpaid.isBefore(item.firstDate()) ? item.withFirstDate(unpaid) : item;
+        // Paid only through the date before it (or the day before, if it's the very first), so it's owed again.
+        LocalDate before = previousDate(changed, unpaid);
+        workspace.items().set(index, changed.withPaidThrough(before != null ? before : unpaid.minusDays(1)));
         workspace.save();
         return Optional.of(unpaid);
     }
