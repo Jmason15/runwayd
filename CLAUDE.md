@@ -26,4 +26,4 @@ mvn -pl desktop javafx:run   # open the app
 - **Never touch the real data directly.** It lives in `~/runwayd/budgets/*.json`. Shared budgets live in a synced folder listed under `sharedBudgets` in `~/runwayd/settings.json`; never write to those either (the other computer is using them). Checks and experiments run on copies (e.g. in a scratch folder); the real files change only through the app.
 - **Personal data never goes in the repo** (see `.gitignore`).
 - **Releases** go out with `./publish.sh x.y.z "notes"` (signed, notarized, GitHub Release); installed copies update themselves. The repo is public: never commit real names, amounts or the user's email (commits use the GitHub noreply address).
-- After changing code the user will look at, rebuild and restart the app (`pkill -f javafx:run`, then `mvn -pl desktop javafx:run` in the background).
+- After changing code the user will look at, rebuild and restart the app (`pkill -f com.finance.runwayd.desktop.Launcher` closes the running app, since `javafx:run` is only in the Maven parent's command line; then `mvn -pl desktop javafx:run` in the background, with JAVA_HOME and PATH set as above).
