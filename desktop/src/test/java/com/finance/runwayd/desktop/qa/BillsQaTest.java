@@ -1,5 +1,6 @@
 package com.finance.runwayd.desktop.qa;
 
+import com.finance.runwayd.core.FinanceService;
 import com.finance.runwayd.core.model.ScheduledItem;
 import com.finance.runwayd.desktop.ui.Format;
 import javafx.scene.control.Button;
@@ -81,7 +82,8 @@ class BillsQaTest extends QaBase {
         settle();
         assertEquals(Format.date(inFiveDays), cell(onlyBillTable(), 0, "Next due"));
         assertShows("1850", forecastCell("Checking", "On chosen date"), "unpaid again");
-        assertEquals(null, reopened().items().get(0).paidThrough());
+        FinanceService saved = reopened();
+        assertEquals(java.util.Optional.of(inFiveDays), saved.nextDue(saved.items().get(0)), "saved as unpaid");
     }
 
     @Test
