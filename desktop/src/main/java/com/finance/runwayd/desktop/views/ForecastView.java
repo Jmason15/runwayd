@@ -221,7 +221,22 @@ public final class ForecastView extends ScrollPane implements Refreshable {
         checklistTable.getColumns().add(Tables.money("Amount", entry -> entry.isBudgetSplit()
                 ? entry.bucketAmount().negate()
                 : service.signedAmount(entry.item())));
+        checklistTable.getColumns().add(Tables.text("Account", entry -> entry.accountId() == null ? ""
+                : service.findAccount(entry.accountId()).map(Account::name).orElse("")));
+        checklistTable.getColumns().add(Tables.money("Balance after", this::balanceAfter));
         checklistTable.getColumns().add(Tables.text("Status", entry -> entry.status().toString()));
+    }
+
+    /**
+     * What the line's account holds right after it, from the forecast; blank if it isn't counted
+     * (ticked, or before the last balance update). Cards and loans show as negative, since that's owed.
+     */
+    private BigDecimal balanceAfter(ChecklistItem entry) {
+        if (entry.balanceAfter() == null) {
+            return null;
+        }
+        boolean owed = service.findAccount(entry.accountId()).map(a -> a.type().isDebt()).orElse(false);
+        return owed ? entry.balanceAfter().negate() : entry.balanceAfter();
     }
 
     /**

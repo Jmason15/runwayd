@@ -16,19 +16,27 @@ import java.time.LocalDate;
  * @param goesTo       where the bucket's money goes, e.g. "Savings" or "Visa", or null if it's spent
  * @param date         the day it's due
  * @param status       whether it's ticked off, already in the bank, or still to come
+ * @param accountId    the account the line comes out of (or, for income, goes into); null until filled in
+ * @param balanceAfter what that account holds right after this line, from the forecast; null if it isn't in
+ *                     the forecast (ticked, or before the last balance update)
  */
 public record ChecklistItem(ScheduledItem item, BudgetBucket bucket, BigDecimal bucketAmount, String goesTo,
-                            LocalDate date, Status status) {
+                            LocalDate date, Status status, Integer accountId, BigDecimal balanceAfter) {
 
     /** A bill or paycheck. */
     public ChecklistItem(ScheduledItem item, LocalDate date, Status status) {
-        this(item, null, null, null, date, status);
+        this(item, null, null, null, date, status, null, null);
+    }
+
+    /** The same line, with its account and what that account holds right after it. */
+    public ChecklistItem withBalanceAfter(Integer account, BigDecimal balance) {
+        return new ChecklistItem(item, bucket, bucketAmount, goesTo, date, status, account, balance);
     }
 
     /** One bucket's share of the paycheck on {@code payday}. */
     public static ChecklistItem forBucket(BudgetBucket bucket, BigDecimal amount, String goesTo, LocalDate payday,
                                           Status status) {
-        return new ChecklistItem(null, bucket, amount, goesTo, payday, status);
+        return new ChecklistItem(null, bucket, amount, goesTo, payday, status, null, null);
     }
 
     /** True for a budget bucket line, false for a bill or paycheck. */

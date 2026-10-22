@@ -149,6 +149,38 @@ class ChecklistTest {
                 .findFirst().orElseThrow();
     }
 
+    // ---- what's left after each line ----
+
+    @Test
+    void eachLineShowsTheBalanceRightAfterIt() {
+        ScheduledItem phone = bill("Phone", "50.00", today.plusDays(1));
+        ScheduledItem rent = bill("Rent", "900.00", today.plusDays(1));
+        ScheduledItem internet = bill("Internet", "100.00", today.plusDays(2));
+
+        List<ChecklistItem> lines = service.checklist(YearMonth.from(today), YearMonth.from(today.plusDays(2))).stream()
+                .filter(e -> !e.isBudgetSplit()).toList();
+
+        // Same-day bills read as a running balance: 2,000 → then each one taken off in turn.
+        ChecklistItem first = lines.get(0);
+        ChecklistItem second = lines.get(1);
+        assertEquals(today.plusDays(1), first.date());
+        assertEquals(new BigDecimal("2000.00").subtract(first.item().amount()), first.balanceAfter());
+        assertEquals(new BigDecimal("1050.00"), second.balanceAfter(), "after Phone and Rent");
+        assertEquals(new BigDecimal("950.00"), lineFor(internet, today.plusDays(2)).balanceAfter());
+        assertEquals(checking.id(), lineFor(internet, today.plusDays(2)).accountId());
+
+        service.setPaid(phone.id(), today.plusDays(1), true);
+        assertEquals(null, lineFor(phone, today.plusDays(1)).balanceAfter(), "ticked: not in the forecast");
+        assertEquals(new BigDecimal("1100.00"), lineFor(rent, today.plusDays(1)).balanceAfter(), "now Rent alone");
+    }
+
+    /** A line from this month through two days from now (which may be next month). */
+    private ChecklistItem lineFor(ScheduledItem item, LocalDate date) {
+        return service.checklist(YearMonth.from(today), YearMonth.from(today.plusDays(2))).stream()
+                .filter(e -> !e.isBudgetSplit() && e.item().id() == item.id() && e.date().equals(date))
+                .findFirst().orElseThrow();
+    }
+
     // ---- looking further ahead ----
 
     @Test

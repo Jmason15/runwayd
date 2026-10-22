@@ -5,6 +5,7 @@ import com.finance.runwayd.core.budget.BudgetPlan;
 import com.finance.runwayd.core.budget.BudgetPlans;
 import com.finance.runwayd.core.forecast.Forecast;
 import com.finance.runwayd.core.forecast.Forecasts;
+import com.finance.runwayd.core.forecast.LedgerEntry;
 import com.finance.runwayd.core.forecast.ScheduleCalculator;
 import com.finance.runwayd.core.model.Account;
 import com.finance.runwayd.core.model.Budget;
@@ -16,7 +17,9 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -69,12 +72,28 @@ public final class Checklist {
         }
         checklist.addAll(budgetLines(firstOfMonth, endOfLast, today));
 
+        // What each line's account holds right after it, read from the forecast.
+        Forecast forecast = forecasts.on(endOfLast);
+        List<LedgerEntry> ledger = forecast.ledger();
+        List<ChecklistItem> withBalances = new ArrayList<>();
+        Map<ChecklistItem, Integer> ledgerOrder = new HashMap<>();
+        for (ChecklistItem entry : checklist) {
+            int account = accountOf(entry);
+            int index = lastLedgerLineFor(entry, account, ledger);
+            ChecklistItem filled = entry.withBalanceAfter(account, index < 0 ? null : ledger.get(index).balanceAfter());
+            withBalances.add(filled);
+            ledgerOrder.put(filled, index < 0 ? Integer.MAX_VALUE : index);
+        }
+
+        // Soonest first. On the same day: income, then budget buckets, then bills and payments in the
+        // order the forecast applies them, so "Balance after" reads like a running balance.
         List<BudgetBucket> buckets = workspace.budget().buckets();
-        checklist.sort(Comparator.comparing(ChecklistItem::date)
+        withBalances.sort(Comparator.comparing(ChecklistItem::date)
                 .thenComparingInt(entry -> entry.isBudgetSplit() ? 1 : entry.item().kind() == ScheduledItem.Kind.INCOME ? 0 : 2)
                 .thenComparingInt(entry -> entry.isBudgetSplit() ? buckets.indexOf(entry.bucket()) : 0)
+                .thenComparingInt(ledgerOrder::get)
                 .thenComparing(entry -> entry.isBudgetSplit() ? "" : entry.item().name(), String.CASE_INSENSITIVE_ORDER));
-        return checklist;
+        return withBalances;
     }
 
     /**
@@ -82,6 +101,37 @@ public final class Checklist {
      * last balance update that you haven't ticked is BEFORE_BALANCE_UPDATE: shown unticked, but not
      * counted in the forecast, since the balance you typed in already includes it.
      */
+    /** The account a line comes out of (or, for income, goes into): the budget's account for a bucket line. */
+    private int accountOf(ChecklistItem entry) {
+        if (entry.isBudgetSplit()) {
+            return budgetPlans.budgetAccount().map(Account::id).orElse(-1);
+        }
+        return entry.item().mainAccountId();
+    }
+
+    /**
+     * Where this line's last change to {@code account} is in the ledger, or -1 if it isn't in the forecast.
+     * A bill is found by its id; a bucket by its "Budget: Savings" description (a debt bucket can pay
+     * several debts in a row, so the last of them).
+     */
+    private static int lastLedgerLineFor(ChecklistItem entry, int account, List<LedgerEntry> ledger) {
+        int found = -1;
+        for (int i = 0; i < ledger.size(); i++) {
+            LedgerEntry line = ledger.get(i);
+            if (line.accountId() != account || !line.date().equals(entry.date())) {
+                continue;
+            }
+            boolean matches = entry.isBudgetSplit()
+                    ? line.itemId() == null && (line.description().equals("Budget: " + entry.bucket().name())
+                            || line.description().startsWith("Budget: " + entry.bucket().name() + " → "))
+                    : Integer.valueOf(entry.item().id()).equals(line.itemId());
+            if (matches) {
+                found = i;
+            }
+        }
+        return found;
+    }
+
     private static ChecklistItem.Status statusOf(ScheduledItem item, LocalDate date, LocalDate balanceDate,
                                                  LocalDate today) {
         if (item.paidThrough() != null && !date.isAfter(item.paidThrough())) {

@@ -148,6 +148,21 @@ class BudgetSplitChecklistTest {
     }
 
     @Test
+    void eachBucketLineShowsCheckingRightAfterIt() {
+        LocalDate payday = today.plusDays(3);
+        setUp(today, payday);
+
+        BigDecimal afterPaycheck = new BigDecimal("1500.00").add(new BigDecimal("3000.00"));
+        ChecklistItem savings = line(payday, "Savings");
+        ChecklistItem spending = line(payday, "Spending");
+
+        assertEquals(checking.id(), savings.accountId());
+        assertEquals(afterPaycheck.subtract(savings.bucketAmount()), savings.balanceAfter());
+        assertEquals(afterPaycheck.subtract(savings.bucketAmount()).subtract(spending.bucketAmount()),
+                spending.balanceAfter(), "the buckets come out one after another");
+    }
+
+    @Test
     void aLongerRangeListsEveryPaydaysBuckets() {
         LocalDate payday = today.plusDays(3);
         setUp(today, payday);
