@@ -37,12 +37,15 @@ class ChecklistQaTest extends QaBase {
         assertEquals("[ ]", checklistCell("Groceries", "Paid"));
         assertEquals("Overdue", checklistCell("Groceries", "Status"));
         assertShows("1800", checklistCell("Groceries", "Balance after"), "$2,000 - $200");
-        assertShows("1800", forecastCell("Checking", "Today"), "still counted");
+        assertShows("2000", forecastCell("Checking", "Today"), "Today is what's in the bank, like the Accounts tab");
+        showBalancesOn(today);
+        assertShows("1800", forecastCell("Checking", "On chosen date"), "the bill still counts in the forecast");
 
         // The bank says $1,900 now. The bill isn't ticked, so it still counts: 1,900 - 200.
         TableView<?> accounts = byId("forecastAccounts");
         typeIntoCell(accounts, rowWhere(accounts, "Account", "Checking"), "Today", "1900");
-        assertShows("1700", forecastCell("Checking", "Today"), "a balance update doesn't tick anything");
+        assertShows("1900", forecastCell("Checking", "Today"), "what was typed");
+        assertShows("1700", forecastCell("Checking", "On chosen date"), "a balance update doesn't tick anything");
         assertEquals("[ ]", checklistCell("Groceries", "Paid"), "nobody ticked it");
         assertEquals("Overdue", checklistCell("Groceries", "Status"));
         openTab("Accounts");
@@ -52,12 +55,12 @@ class ChecklistQaTest extends QaBase {
         tick("Groceries");
         assertEquals("Paid", checklistCell("Groceries", "Status"));
         assertEquals("", checklistCell("Groceries", "Balance after"), "ticked lines aren't in the forecast");
-        assertShows("1900", forecastCell("Checking", "Today"), "ticked, so not taken off");
+        assertShows("1900", forecastCell("Checking", "On chosen date"), "ticked, so not taken off");
         assertEquals(threeDaysAgo, reopened().items().get(0).paidThrough());
 
         tick("Groceries");
         assertEquals("Overdue", checklistCell("Groceries", "Status"));
-        assertShows("1700", forecastCell("Checking", "Today"), "unticked, so counted again");
+        assertShows("1700", forecastCell("Checking", "On chosen date"), "unticked, so counted again");
     }
 
     @Test

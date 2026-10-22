@@ -103,7 +103,8 @@ class BreakItQaTest extends QaBase {
         addBill("Old loan", "100", "Monthly", tomorrow.minusYears(26));
 
         // Tracking began today, so 26 years of old payments don't come out of today's balance.
-        assertShows("2000", forecastCell("Checking", "Today"), "no ancient history");
+        showBalancesOn(today);
+        assertShows("2000", forecastCell("Checking", "On chosen date"), "no ancient history");
         openTab("Bills & Income");
         LocalDate nextDue = LocalDate.parse(reopened().nextDue(reopened().items().get(0)).orElseThrow().toString());
         assertFalse(nextDue.isBefore(today), "next due is from today on, was " + nextDue);

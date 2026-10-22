@@ -209,8 +209,8 @@ public final class ForecastView extends ScrollPane implements Refreshable {
     }
 
     /**
-     * Saves what your bank shows right now. Everything on screen is recalculated from it:
-     * the due list (bills before today stop counting as overdue), the chart and the ledger.
+     * Saves what your bank shows right now, the same as Update balance on the Accounts tab. Everything
+     * on screen is recalculated from it; bills you haven't ticked still count (see the checklist).
      */
     private void saveBankBalance(AccountSummary row, BigDecimal bankBalance) {
         // For a card or loan, "2400.00" and "-2400.00" both mean you owe $2,400.00.
@@ -353,12 +353,11 @@ public final class ForecastView extends ScrollPane implements Refreshable {
         List<Account> accounts = service.accounts();
 
         forecast = service.forecast(date);
-        Forecast today = service.forecast(LocalDate.now());
         DebtSummary debt = service.debtSummary(date);
 
         // Every account in one list: checking and savings first, then cards and loans.
         summaryTable.getItems().setAll(accounts.stream()
-                .map(account -> summaryRow(account, today, debt))
+                .map(account -> summaryRow(account, debt))
                 .toList());
         showChecklist();
         showDebtLine(debt, date);
@@ -396,9 +395,13 @@ public final class ForecastView extends ScrollPane implements Refreshable {
      * do it, because money you owe counts against you. The account itself still
      * stores what you owe as a positive number.
      */
-    private AccountSummary summaryRow(Account account, Forecast today, DebtSummary debt) {
+    /**
+     * One row. "Today" is the balance as entered (the same as the Accounts tab), so it matches the bank;
+     * bills not ticked yet show up in "On chosen date" and on the checklist instead.
+     */
+    private AccountSummary summaryRow(Account account, DebtSummary debt) {
         if (!account.type().isDebt()) {
-            return new AccountSummary(account, today.balanceOf(account.id()),
+            return new AccountSummary(account, account.balance(),
                     forecast.balanceOf(account.id()), noteFor(account));
         }
         String note = debt.debts().stream()
@@ -408,7 +411,7 @@ public final class ForecastView extends ScrollPane implements Refreshable {
                         ? "Not paid off with current payments"
                         : "Paid off " + Format.monthYear(row.payoffDate()))
                 .orElse("");
-        return new AccountSummary(account, today.balanceOf(account.id()).negate(),
+        return new AccountSummary(account, account.balance().negate(),
                 forecast.balanceOf(account.id()).negate(), note);
     }
 
