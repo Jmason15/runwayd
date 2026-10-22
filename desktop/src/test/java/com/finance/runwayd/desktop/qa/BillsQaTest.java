@@ -2,6 +2,7 @@ package com.finance.runwayd.desktop.qa;
 
 import com.finance.runwayd.core.model.ScheduledItem;
 import com.finance.runwayd.desktop.ui.Format;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -81,6 +82,25 @@ class BillsQaTest extends QaBase {
         assertEquals(Format.date(inFiveDays), cell(onlyBillTable(), 0, "Next due"));
         assertShows("1850", forecastCell("Checking", "On chosen date"), "unpaid again");
         assertEquals(null, reopened().items().get(0).paidThrough());
+    }
+
+    @Test
+    void everyBillHasAnUndoButtonThatWorksRightThere() {
+        addBill("Electric", "150", "Monthly", inFiveDays);
+        Button undo = undoButton();
+        assertTrue(undo.isVisible(), "Undo is always there");
+        assertTrue(undo.isDisabled(), "but greyed out with nothing marked");
+
+        press("Mark paid"); // this month's: not ahead, and Undo still works
+        assertFalse(undoButton().isDisabled());
+        clickOn(undoButton());
+        settle();
+
+        assertEquals(Format.date(inFiveDays), cell(onlyBillTable(), 0, "Next due"), "unpaid again");
+        assertTrue(undoButton().isDisabled(), "nothing left to undo");
+        assertEquals(null, reopened().items().get(0).paidThrough());
+        showBalancesOn(today.plusMonths(1));
+        assertShows("1850", forecastCell("Checking", "On chosen date"), "counted again");
     }
 
     @Test
@@ -211,6 +231,14 @@ class BillsQaTest extends QaBase {
         TableView<?> table = onlyBillTable();
         String last = table.getColumns().get(table.getColumns().size() - 1).getText();
         return cell(table, 0, last);
+    }
+
+    /** The Undo button on the first bill's row. */
+    private Button undoButton() {
+        TableView<?> table = onlyBillTable();
+        javafx.scene.Node cell = cellNode(table, 0, table.getColumns().get(table.getColumns().size() - 1).getText());
+        return cell.lookupAll(".button").stream().map(Button.class::cast)
+                .filter(b -> "Undo".equals(b.getText())).findFirst().orElseThrow(() -> new AssertionError("no Undo button"));
     }
 
     /** The footer: "Net: -$150.00 / month · -$1,800.00 / year". */

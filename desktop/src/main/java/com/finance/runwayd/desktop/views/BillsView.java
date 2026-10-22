@@ -360,8 +360,8 @@ public final class BillsView extends BorderPane implements Refreshable {
     }
 
     /**
-     * The last column: "Mark paid" (or "Mark received"), plus a small "Undo" beside it when
-     * the bill is marked paid ahead, so a click too many is easy to take back.
+     * The last column: "Mark paid" (or "Mark received"), and always an "Undo" beside it, so any
+     * mark paid can be taken back right there. It's greyed out when there's nothing to undo.
      */
     private TableColumn<ScheduledItem, ScheduledItem> payColumn() {
         TableColumn<ScheduledItem, ScheduledItem> column = new TableColumn<>("");
@@ -399,13 +399,19 @@ public final class BillsView extends BorderPane implements Refreshable {
                         .orElse("Ended"));
                 show(done, !somethingDue);
 
-                boolean canUndo = paidOn.isPresent() || ahead.isPresent();
-                show(undo, canUndo);
+                // Undo is always there, in the same spot on every row, so it's quick to find. Each click
+                // unmarks the latest date marked paid; greyed out when nothing is marked.
+                undo.setDisable(!service.canUndoPaid(item));
                 if (paidOn.isPresent()) {
                     undo.setTooltip(new Tooltip("Mark it not " + doneWord(item) + " again."));
+                } else if (ahead.isPresent()) {
+                    undo.setTooltip(new Tooltip("Marked " + doneWord(item) + " ahead, up to "
+                            + Format.date(ahead.get()) + ". Click to unmark " + Format.date(ahead.get()) + "."));
+                } else if (!undo.isDisabled()) {
+                    undo.setTooltip(new Tooltip("Unmark " + Format.date(item.paidThrough())
+                            + ", so it counts as not " + doneWord(item) + " again."));
                 } else {
-                    ahead.ifPresent(date -> undo.setTooltip(new Tooltip("Marked " + doneWord(item) + " ahead, up to "
-                            + Format.date(date) + ". Click to unmark " + Format.date(date) + ".")));
+                    undo.setTooltip(null);
                 }
                 setGraphic(buttons);
             }
