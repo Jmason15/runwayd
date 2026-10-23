@@ -17,10 +17,8 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableCell;
@@ -40,13 +38,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The main screen: pick any future date and see what every account will hold.
+ * The main screen: every account's balance, what's coming up, and how low each account gets.
  *
  * <pre>
- *   Show balances on: [date]  [+1 month] [+3 months] [+6 months] [+1 year]
+ *                                                            [x] Include budget splits
  *   (warning if a balance is old)
- *   ┌ Accounts: balance (click to type your bank's) / updated / on that date / low point ┐
- *   Total debt: today, on that date, debt-free date
+ *   ┌ Accounts: balance (click to type your bank's) / updated / low point in the next 3 months ┐
+ *   Total debt: today, debt-free date
  *   ┌ This month: [✓] Oct 1  Store Card  -$340.06  Paid  ...  tick bills off as you pay them ┐
  *   Details for: [account]
  *   ┌ Chart of that account's balance over time ┐
@@ -90,7 +88,9 @@ public final class ForecastView extends ScrollPane implements Refreshable {
 
     private final FinanceService service;
 
-    private final DatePicker datePicker = new DatePicker(LocalDate.now().plusMonths(3));
+    /** How far ahead the low-point warning, the chart and the ledger look. */
+    private static final int LOOK_AHEAD_MONTHS = 3;
+
     private final CheckBox includeBudget = new CheckBox("Include budget splits");
     private final Label staleWarning = new Label();
     private final Label debtLine = new Label();
@@ -106,7 +106,7 @@ public final class ForecastView extends ScrollPane implements Refreshable {
     private Forecast forecast;
 
     /** One row of the summary table. The text in {@code note} depends on the account type. */
-    private record AccountSummary(Account account, BigDecimal balance, BigDecimal onDate, String note) {
+    private record AccountSummary(Account account, BigDecimal balance, String note) {
     }
 
     public ForecastView(FinanceService service) {
@@ -120,7 +120,6 @@ public final class ForecastView extends ScrollPane implements Refreshable {
         summaryTable.setId("forecastAccounts");
         checklistTable.setId("checklist");
         ledgerTable.setId("ledger");
-        datePicker.setId("forecastDate");
         debtLine.setId("debtLine");
         checklistRange.setId("checklistRange");
         accountPicker.setId("detailsAccount");
@@ -144,7 +143,7 @@ public final class ForecastView extends ScrollPane implements Refreshable {
 
         // Everything stacked top to bottom, full width.
         VBox page = new VBox(12,
-                buildDateBar(),
+                buildTopBar(),
                 staleWarning,
                 section("Accounts", summaryTable, balanceHint, debtLine),
                 checklistSection(),
@@ -156,7 +155,6 @@ public final class ForecastView extends ScrollPane implements Refreshable {
         setContent(page);
         setFitToWidth(true); // stretch to the window's width; only scroll up and down
 
-        datePicker.valueProperty().addListener((obs, oldDate, newDate) -> refresh());
         accountPicker.valueProperty().addListener((obs, oldAccount, newAccount) -> showDetails());
     }
 
@@ -164,9 +162,8 @@ public final class ForecastView extends ScrollPane implements Refreshable {
     // Layout
     // -------------------------------------------------------------------------
 
-    private HBox buildDateBar() {
-        Label label = new Label("Show balances on");
-        label.getStyleClass().add("heading");
+    /** Just the "Include budget splits" switch, on the right. */
+    private HBox buildTopBar() {
         // On: each paycheck's Budget tab split leaves checking on payday (and the debt bucket pays
         // down debts). Off: the forecast shows just your bills, as if the extra cash stayed put.
         includeBudget.setTooltip(new Tooltip("Take each paycheck's Budget tab split out of checking on payday."));
@@ -176,18 +173,9 @@ public final class ForecastView extends ScrollPane implements Refreshable {
         });
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        HBox bar = new HBox(8, label, datePicker,
-                jumpButton("+1 month", 1), jumpButton("+3 months", 3),
-                jumpButton("+6 months", 6), jumpButton("+1 year", 12), spacer, includeBudget);
+        HBox bar = new HBox(8, spacer, includeBudget);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
-    }
-
-    /** A button that sets the date to N months from today. */
-    private Button jumpButton(String text, int months) {
-        Button button = new Button(text);
-        button.setOnAction(event -> datePicker.setValue(LocalDate.now().plusMonths(months)));
-        return button;
     }
 
     private void buildSummaryTable() {
@@ -200,7 +188,6 @@ public final class ForecastView extends ScrollPane implements Refreshable {
         summaryTable.setEditable(true);
         summaryTable.getColumns().add(Tables.editableMoney("Balance", AccountSummary::balance, this::saveBankBalance));
         summaryTable.getColumns().add(Tables.text("Updated", row -> updatedText(row.account().balanceDate())));
-        summaryTable.getColumns().add(Tables.money("On chosen date", AccountSummary::onDate));
         summaryTable.getColumns().add(Tables.text("Watch out for", AccountSummary::note));
         // Clicking a row shows that account's details below.
         summaryTable.getSelectionModel().selectedItemProperty().addListener((obs, oldRow, row) -> {
@@ -350,7 +337,7 @@ public final class ForecastView extends ScrollPane implements Refreshable {
 
     @Override
     public void refresh() {
-        LocalDate date = datePicker.getValue() != null ? datePicker.getValue() : LocalDate.now();
+        LocalDate date = LocalDate.now().plusMonths(LOOK_AHEAD_MONTHS);
         includeBudget.setSelected(service.budgetInForecast());
         List<Account> accounts = service.accounts();
 
@@ -362,7 +349,7 @@ public final class ForecastView extends ScrollPane implements Refreshable {
                 .map(account -> summaryRow(account, debt))
                 .toList());
         showChecklist();
-        showDebtLine(debt, date);
+        showDebtLine(debt);
 
         showStaleWarning(accounts);
         refreshAccountPicker(accounts);
@@ -404,12 +391,11 @@ public final class ForecastView extends ScrollPane implements Refreshable {
 
     /**
      * One row. "Balance" is the balance as entered (the same as the Accounts tab), so it matches the bank;
-     * bills not ticked yet show up in "On chosen date" and on the checklist instead.
+     * bills not ticked yet show up on the checklist instead (its Balance after starts from this balance).
      */
     private AccountSummary summaryRow(Account account, DebtSummary debt) {
         if (!account.type().isDebt()) {
-            return new AccountSummary(account, account.balance(),
-                    forecast.balanceOf(account.id()), noteFor(account));
+            return new AccountSummary(account, account.balance(), noteFor(account));
         }
         String note = debt.debts().stream()
                 .filter(row -> row.account().id() == account.id())
@@ -418,12 +404,11 @@ public final class ForecastView extends ScrollPane implements Refreshable {
                         ? "Not paid off with current payments"
                         : "Paid off " + Format.monthYear(row.payoffDate()))
                 .orElse("");
-        return new AccountSummary(account, account.balance().negate(),
-                forecast.balanceOf(account.id()).negate(), note);
+        return new AccountSummary(account, account.balance().negate(), note);
     }
 
     /** "Total debt: $17,550.00 today, $13,600.00 on Jan 18, 2027. Debt-free: Aug 2029". Hidden with no debts. */
-    private void showDebtLine(DebtSummary debt, LocalDate date) {
+    private void showDebtLine(DebtSummary debt) {
         boolean hasDebt = !debt.debts().isEmpty();
         debtLine.setVisible(hasDebt);
         debtLine.setManaged(hasDebt);
@@ -431,9 +416,7 @@ public final class ForecastView extends ScrollPane implements Refreshable {
             String debtFree = debt.debtFreeDate() == null
                     ? "not with current payments"
                     : Format.monthYear(debt.debtFreeDate());
-            debtLine.setText("Total debt: " + Format.money(debt.totalToday()) + " today, "
-                    + Format.money(debt.totalOnDate()) + " on " + Format.date(date)
-                    + ".   Debt-free: " + debtFree + ".   (Details on the Debt tab.)");
+            debtLine.setText("Total debt: " + Format.money(debt.totalToday()) + " today.   Debt-free: " + debtFree + ".   (Details on the Debt tab.)");
         }
     }
 
@@ -446,7 +429,7 @@ public final class ForecastView extends ScrollPane implements Refreshable {
                 .toList();
 
         staleWarning.setText("These balances are more than " + STALE_AFTER_DAYS + " days old, so the forecast is a guess: "
-                + String.join(", ", stale) + ". Click the amount under \"Today\" and type what your bank shows.");
+                + String.join(", ", stale) + ". Click the amount under \"Balance\" and type what your bank shows.");
         staleWarning.setVisible(!stale.isEmpty());
         staleWarning.setManaged(!stale.isEmpty());
     }

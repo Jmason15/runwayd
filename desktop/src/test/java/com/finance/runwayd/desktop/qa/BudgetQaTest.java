@@ -65,7 +65,6 @@ class BudgetQaTest extends QaBase {
         }
 
         // With the splits taken out on payday, Checking never goes below the $500 to keep.
-        showBalancesOn(today.plusYears(1));
         String note = forecastCell("Checking", "Watch out for");
         assertTrue(note.startsWith("Lowest: "), note);
         BigDecimal lowest = amountShown(note.substring("Lowest: ".length(), note.indexOf(" on ")));

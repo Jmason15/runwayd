@@ -477,19 +477,32 @@ abstract class QaBase extends ApplicationTest {
         return pane.lookupAll(".form-error").stream().map(Label.class::cast).map(Label::getText).findFirst().orElse("");
     }
 
-    /** On the Forecast tab: types a date into "Show balances on". */
-    void showBalancesOn(LocalDate date) {
+    /**
+     * What the forecast says an account holds at the end of {@code date} (within the next 3 months), read
+     * off the Forecast tab like a person would: pick the account under "Details for" and take the running
+     * balance from the last ledger line on or before that day. With nothing before it, the account's
+     * Balance. Cards and loans read as owed (positive), the way the ledger shows them.
+     */
+    String balanceOn(String account, LocalDate date) {
         openTab("Forecast");
-        DatePicker picker = byId("forecastDate");
-        clickOn(picker.getEditor());
-        interact(() -> picker.getEditor().selectAll());
-        key(KeyCode.BACK_SPACE);
-        write(picker.getConverter().toString(date), 0); // no pause between letters
-        key(KeyCode.ENTER);
-        settle();
+        chooseIn(byId("detailsAccount"), account);
+        TableView<?> ledger = byId("ledger");
+        String found = null;
+        for (int row = 0; row < ledger.getItems().size(); row++) {
+            LocalDate day = ((com.finance.runwayd.core.forecast.LedgerEntry) ledger.getItems().get(row)).date();
+            if (!day.isAfter(date)) {
+                found = cell(ledger, row, "Balance after");
+            }
+        }
+        if (found != null) {
+            return found;
+        }
+        String balance = forecastCell(account, "Balance");
+        boolean owed = List.of("Credit card", "Loan").contains(forecastCell(account, "Type"));
+        return owed && balance.startsWith("-") ? balance.substring(1) : balance; // owed, like the ledger
     }
 
-    /** On the Forecast tab: what the Accounts table shows for an account in a column ("Today", "On chosen date", ...). */
+    /** On the Forecast tab: what the Accounts table shows for an account in a column ("Balance", "Updated", "Watch out for"). */
     String forecastCell(String account, String column) {
         openTab("Forecast");
         return cellWhere(byId("forecastAccounts"), "Account", account, column);

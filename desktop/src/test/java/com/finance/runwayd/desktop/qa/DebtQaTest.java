@@ -53,10 +53,9 @@ class DebtQaTest extends QaBase {
                 ((Label) byId("debtLine")).getText());
         assertShows("-1000", forecastCell("Store Card", "Balance"), "owed shows as negative on the Forecast tab");
 
-        // A year out every payment has been made: checking paid $1,000, the card is at zero.
-        showBalancesOn(tomorrow.plusYears(1));
-        assertShows("4000", forecastCell("Checking", "On chosen date"), "$5,000 - 10 × $100");
-        assertShows("0", forecastCell("Store Card", "On chosen date"), "paid off");
+        // Two months on, three payments have been made: tomorrow's and the next two.
+        assertShows("4700", balanceOn("Checking", tomorrow.plusMonths(2)), "$5,000 - 3 × $100");
+        assertShows("700", balanceOn("Store Card", tomorrow.plusMonths(2)), "$1,000 - 3 × $100 still owed");
 
         openTab("Bills & Income");
         assertTrue(tablesWithColumn("Next due").stream()

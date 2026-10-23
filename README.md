@@ -1,6 +1,6 @@
 # runwayd
 
-Pick any future date and see how much money each account will have, and when each debt will be paid off. A personal finance desktop app in Java 21 + JavaFX.
+See how much money each account will have as every bill and paycheck comes and goes, how low it gets, and when each debt will be paid off. A personal finance desktop app in Java 21 + JavaFX.
 
 *The name:* a startup's **runway** is how long its money lasts, and on Unix a name ending in **d** is a daemon (`sshd`, `crond`, `launchd`): a program that runs in the background and keeps watch. So `runwayd` is the daemon watching how far your money goes.
 
@@ -10,7 +10,7 @@ Pick any future date and see how much money each account will have, and when eac
 
 | Tab | What it's for |
 |---|---|
-| **Forecast** | Every account's balance on any date, a chart, the full day-by-day ledger, and a checklist (this month, or up to a year ahead) to tick bills and budget transfers off |
+| **Forecast** | Every account's balance and its low point over the next 3 months, a chart, the full day-by-day ledger, and a checklist (this month, or up to a year ahead) to tick bills and budget transfers off |
 | **Bills & Income** | Paychecks, bills and transfers grouped by category, with search, filters, totals per month and year, and Mark paid / Undo |
 | **Debt** | What you owe, interest vs. principal, payoff dates, debt-free date, and the snowball rollover |
 | **Budget** | Splits each paycheck into buckets (spent, into an account, or paying down debt) while never letting checking drop below the amount you keep |

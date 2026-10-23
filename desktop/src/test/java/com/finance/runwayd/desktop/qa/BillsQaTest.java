@@ -47,8 +47,7 @@ class BillsQaTest extends QaBase {
 
         // Today it hasn't come out yet; a month from now it has, once.
         assertShows("2000", forecastCell("Checking", "Balance"), "not due yet");
-        showBalancesOn(today.plusMonths(1));
-        assertShows("1850", forecastCell("Checking", "On chosen date"), "$2,000 - $150");
+        assertShows("1850", balanceOn("Checking", today.plusMonths(1)), "$2,000 - $150");
 
         assertEquals(new BigDecimal("150.00"), reopened().items().get(0).amount().setScale(2));
     }
@@ -61,8 +60,7 @@ class BillsQaTest extends QaBase {
 
         assertShows("-175.25", cell(onlyBillTable(), 0, "Amount"), "the typed amount");
         assertFooter("-175.25", "-2103");
-        showBalancesOn(today.plusMonths(1));
-        assertShows("1824.75", forecastCell("Checking", "On chosen date"), "$2,000 - $175.25");
+        assertShows("1824.75", balanceOn("Checking", today.plusMonths(1)), "$2,000 - $175.25");
         assertEquals(0, new BigDecimal("175.25").compareTo(reopened().items().get(0).amount()));
     }
 
@@ -74,14 +72,13 @@ class BillsQaTest extends QaBase {
         assertEquals(Format.date(inFiveDays.plusMonths(1)), cell(onlyBillTable(), 0, "Next due"));
         Label undoMessage = byId("undoMessage");
         assertTrue(undoMessage.getText().contains("Electric"), undoMessage.getText());
-        showBalancesOn(today.plusMonths(1));
-        assertShows("2000", forecastCell("Checking", "On chosen date"), "paid, so not counted");
+        assertShows("2000", balanceOn("Checking", today.plusMonths(1)), "paid, so not counted");
 
         openTab("Bills & Income");
         clickOn((javafx.scene.Node) byId("undoButton"));
         settle();
         assertEquals(Format.date(inFiveDays), cell(onlyBillTable(), 0, "Next due"));
-        assertShows("1850", forecastCell("Checking", "On chosen date"), "unpaid again");
+        assertShows("1850", balanceOn("Checking", today.plusMonths(1)), "unpaid again");
         FinanceService saved = reopened();
         assertEquals(java.util.Optional.of(inFiveDays), saved.nextDue(saved.items().get(0)), "saved as unpaid");
     }
@@ -104,8 +101,7 @@ class BillsQaTest extends QaBase {
         clickOn(undoButton());
         settle();
         assertEquals(Format.date(due.minusMonths(1)), cell(onlyBillTable(), 0, "Next due"));
-        showBalancesOn(due);
-        assertShows("1700", forecastCell("Checking", "On chosen date"), "$2,000 - both months' $150");
+        assertShows("1700", balanceOn("Checking", due), "$2,000 - both months' $150");
         assertEquals(due.minusMonths(1), reopened().items().get(0).firstDate());
     }
 
@@ -186,8 +182,7 @@ class BillsQaTest extends QaBase {
         answer(true);
         assertEquals(List.of("Electric"), reopened().items().stream().map(ScheduledItem::name).toList());
         assertFooter("-150", "-1800");
-        showBalancesOn(today.plusMonths(1));
-        assertShows("1850", forecastCell("Checking", "On chosen date"), "only Electric comes out now");
+        assertShows("1850", balanceOn("Checking", today.plusMonths(1)), "only Electric comes out now");
     }
 
     @Test

@@ -38,14 +38,13 @@ class ChecklistQaTest extends QaBase {
         assertEquals("Overdue", checklistCell("Groceries", "Status"));
         assertShows("1800", checklistCell("Groceries", "Balance after"), "$2,000 - $200");
         assertShows("2000", forecastCell("Checking", "Balance"), "Today is what's in the bank, like the Accounts tab");
-        showBalancesOn(today);
-        assertShows("1800", forecastCell("Checking", "On chosen date"), "the bill still counts in the forecast");
+        assertShows("1800", balanceOn("Checking", today), "the bill still counts in the forecast");
 
         // The bank says $1,900 now. The bill isn't ticked, so it still counts: 1,900 - 200.
         TableView<?> accounts = byId("forecastAccounts");
         typeIntoCell(accounts, rowWhere(accounts, "Account", "Checking"), "Balance", "1900");
         assertShows("1900", forecastCell("Checking", "Balance"), "what was typed");
-        assertShows("1700", forecastCell("Checking", "On chosen date"), "a balance update doesn't tick anything");
+        assertShows("1700", balanceOn("Checking", today), "a balance update doesn't tick anything");
         assertEquals("[ ]", checklistCell("Groceries", "Paid"), "nobody ticked it");
         assertEquals("Overdue", checklistCell("Groceries", "Status"));
         openTab("Accounts");
@@ -55,12 +54,12 @@ class ChecklistQaTest extends QaBase {
         tick("Groceries");
         assertEquals("Paid", checklistCell("Groceries", "Status"));
         assertEquals("", checklistCell("Groceries", "Balance after"), "ticked lines aren't in the forecast");
-        assertShows("1900", forecastCell("Checking", "On chosen date"), "ticked, so not taken off");
+        assertShows("1900", balanceOn("Checking", today), "ticked, so not taken off");
         assertEquals(threeDaysAgo, reopened().items().get(0).paidThrough());
 
         tick("Groceries");
         assertEquals("Overdue", checklistCell("Groceries", "Status"));
-        assertShows("1700", forecastCell("Checking", "On chosen date"), "unticked, so counted again");
+        assertShows("1700", balanceOn("Checking", today), "unticked, so counted again");
     }
 
     @Test
@@ -87,8 +86,7 @@ class ChecklistQaTest extends QaBase {
         }
         assertTrue(counted >= 4, "all four lines are counted, saw " + counted);
         // Ends where the forecast says Checking ends up: 2,000 - 200 - 500 - 50 + 1,000 (less any budget splits).
-        showBalancesOn(tomorrow);
-        assertEquals(running, amountShown(forecastCell("Checking", "On chosen date")));
+        assertEquals(running, amountShown(balanceOn("Checking", tomorrow)));
     }
 
     // ---- helpers ----

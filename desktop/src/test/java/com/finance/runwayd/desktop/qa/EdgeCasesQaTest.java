@@ -49,9 +49,8 @@ class EdgeCasesQaTest extends QaBase {
         save();
 
         assertEquals("Checking → Savings", cell(tablesWithColumn("Next due").get(0), 0, "Account"));
-        showBalancesOn(tomorrow);
-        assertShows("1750", forecastCell("Checking", "On chosen date"), "out of checking");
-        assertShows("350", forecastCell("Savings", "On chosen date"), "into savings");
+        assertShows("1750", balanceOn("Checking", tomorrow), "out of checking");
+        assertShows("350", balanceOn("Savings", tomorrow), "into savings");
     }
 
     @Test
@@ -86,9 +85,8 @@ class EdgeCasesQaTest extends QaBase {
         BigDecimal toSavings = amountShown(cell(paychecks, 0, "Savings"));
         assertTrue(toSavings.signum() > 0, "something goes to savings");
 
-        showBalancesOn(tomorrow);
-        BigDecimal checking = amountShown(forecastCell("Checking", "On chosen date"));
-        BigDecimal savings = amountShown(forecastCell("Savings", "On chosen date"));
+        BigDecimal checking = amountShown(balanceOn("Checking", tomorrow));
+        BigDecimal savings = amountShown(balanceOn("Savings", tomorrow));
         assertEquals(toSavings, savings, "Savings grows by exactly the bucket");
         assertEquals(new BigDecimal("2000.00").subtract(toSavings), checking, "and Checking shrinks by it");
     }
@@ -108,17 +106,16 @@ class EdgeCasesQaTest extends QaBase {
         assertShows("24", cellWhere(debts, "Debt", "Visa", "Interest / mo"), "1,200 × 24% ÷ 12");
 
         // The Debt tab's "Owed on date" and the Forecast tab must agree on the same day.
-        LocalDate inSixMonths = today.plusMonths(6);
+        LocalDate inTwoMonths = today.plusMonths(2); // the Forecast tab looks 3 months ahead
         DatePicker debtDate = lookup(".date-picker").match(this::isReallyVisible).query();
         clickOn(debtDate.getEditor());
         interact(() -> debtDate.getEditor().selectAll());
-        write(debtDate.getConverter().toString(inSixMonths), 0);
+        write(debtDate.getConverter().toString(inTwoMonths), 0);
         key(KeyCode.ENTER);
         String owedThen = cellWhere(byId("debtTable"), "Debt", "Visa", "Owed on date");
         assertTrue(amountShown(owedThen).compareTo(new BigDecimal("1200")) > 0, "interest adds up: " + owedThen);
 
-        showBalancesOn(inSixMonths);
-        assertEquals(amountShown(owedThen).negate(), amountShown(forecastCell("Visa", "On chosen date")),
-                "Forecast shows the same amount owed (as negative)");
+        assertEquals(amountShown(owedThen), amountShown(balanceOn("Visa", inTwoMonths)),
+                "the Forecast tab's ledger shows the same amount owed");
     }
 }

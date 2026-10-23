@@ -68,9 +68,8 @@ class BreakItQaTest extends QaBase {
         choose("Paid from", "Savings");
         save();
 
-        showBalancesOn(tomorrow);
-        assertShows("2000", forecastCell("Checking", "On chosen date"), "Checking no longer pays it");
-        assertShows("-400", forecastCell("Savings", "On chosen date"), "$500 - $900");
+        assertShows("2000", balanceOn("Checking", tomorrow), "Checking no longer pays it");
+        assertShows("-400", balanceOn("Savings", tomorrow), "$500 - $900");
         assertTrue(forecastCell("Savings", "Watch out for").startsWith("OVERDRAWN"),
                 "going below zero is called out: " + forecastCell("Savings", "Watch out for"));
     }
@@ -84,9 +83,8 @@ class BreakItQaTest extends QaBase {
         save();
         addBill("Penny", "0.01", "Monthly", tomorrow);
 
-        // Twelve pennies in the next year.
-        showBalancesOn(tomorrow.plusMonths(11));
-        assertShows("999999999.87", forecastCell("Checking", "On chosen date"), "999,999,999.99 - 12 × 0.01");
+        // Three pennies by two months from tomorrow.
+        assertShows("999999999.96", balanceOn("Checking", tomorrow.plusMonths(2)), "999,999,999.99 - 3 × 0.01");
     }
 
     @Test
@@ -103,20 +101,18 @@ class BreakItQaTest extends QaBase {
         addBill("Old loan", "100", "Monthly", tomorrow.minusYears(26));
 
         // Tracking began today, so 26 years of old payments don't come out of today's balance.
-        showBalancesOn(today);
-        assertShows("2000", forecastCell("Checking", "On chosen date"), "no ancient history");
+        assertShows("2000", balanceOn("Checking", today), "no ancient history");
         openTab("Bills & Income");
         LocalDate nextDue = LocalDate.parse(reopened().nextDue(reopened().items().get(0)).orElseThrow().toString());
         assertFalse(nextDue.isBefore(today), "next due is from today on, was " + nextDue);
     }
 
     @Test
-    void tenYearsAheadWorksAndShowsTheOverdraft() {
-        addBill("Rent", "100", "Monthly", tomorrow);
-        showBalancesOn(tomorrow.plusYears(10).minusDays(1));
+    void goingBelowZeroIsCalledOut() {
+        addBill("Rent", "900", "Monthly", tomorrow);
 
-        // 120 payments of $100 out of $2,000.
-        assertShows("-10000", forecastCell("Checking", "On chosen date"), "$2,000 - 120 × $100");
+        // Three rents of $900 out of $2,000 within the next 3 months.
+        assertShows("-700", balanceOn("Checking", tomorrow.plusMonths(2)), "$2,000 - 3 × $900");
         assertTrue(forecastCell("Checking", "Watch out for").startsWith("OVERDRAWN"));
     }
 
@@ -149,12 +145,11 @@ class BreakItQaTest extends QaBase {
     @Test
     void switchingTabsBackAndForthKeepsTheSameNumbers() {
         addBill("Rent", "900", "Monthly", tomorrow);
-        showBalancesOn(tomorrow);
-        String first = forecastCell("Checking", "On chosen date");
+        String first = balanceOn("Checking", tomorrow);
         for (String tab : List.of("Bills & Income", "Debt", "Budget", "Accounts", "Forecast", "Budget", "Forecast")) {
             openTab(tab);
         }
-        assertEquals(first, forecastCell("Checking", "On chosen date"));
+        assertEquals(first, balanceOn("Checking", tomorrow));
         assertShows("1100", first, "$2,000 - $900");
     }
 

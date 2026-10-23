@@ -93,7 +93,7 @@ public final class App extends Application {
     private void showAbout() {
         String source = AppInfo.updateRepo().isEmpty() ? "" : "\n\nReleases: github.com/" + AppInfo.updateRepo();
         Alerts.info("runwayd " + AppInfo.version() + "\n\n"
-                + "How far does your money fly? Pick any date and see every account's balance, "
+                + "How far does your money fly? See every account's balance as bills and paychecks come and go, "
                 + "when each debt is paid off, and how much of each paycheck is safe to split." + source);
     }
 
