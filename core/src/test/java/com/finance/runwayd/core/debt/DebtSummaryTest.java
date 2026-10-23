@@ -55,6 +55,21 @@ class DebtSummaryTest {
     }
 
     @Test
+    void owedTodayIsWhatYouTypedEvenWithAPaymentNotTickedYet() {
+        // $1,000 typed in today; a $100 payment is due today and isn't ticked.
+        Account card = addDebt("Visa", "1000.00");
+        service.addItem(new ScheduledItem(0, "Visa payment", new BigDecimal("100.00"), Frequency.MONTHLY, today,
+                null, checking.id(), card.id()));
+
+        DebtSummary summary = service.debtSummary(today.plusMonths(1));
+
+        assertEquals(new BigDecimal("1000.00"), summary.debts().get(0).owedToday(), "exactly what was typed");
+        assertEquals(new BigDecimal("1000.00"), summary.totalToday());
+        // The forecast still counts the unticked payment: today's and next month's are both taken off.
+        assertEquals(new BigDecimal("800.00"), summary.debts().get(0).owedOnDate());
+    }
+
+    @Test
     void totalsAddUpAllDebts() {
         Account card = addDebt("Card", "1000.00");
         Account loan = addDebt("Loan", "4000.00");

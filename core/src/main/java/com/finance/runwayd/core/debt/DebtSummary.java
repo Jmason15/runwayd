@@ -43,7 +43,7 @@ public record DebtSummary(
      *
      * @param account        the credit card or loan
      * @param payment        the item that pays it down (its rule is shown on the Debt tab), or null if none
-     * @param owedToday      what you owe right now
+     * @param owedToday      what you owe, as last entered (the same as the RunWay tab)
      * @param owedOnDate     what you'll owe on the chosen date
      * @param monthlyPayment what's paid toward it per month: its own payment (average), plus any budget money
      * @param budgetPerMonth  the part of {@code monthlyPayment} that comes from the Budget tab: about how much

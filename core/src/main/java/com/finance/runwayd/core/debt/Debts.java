@@ -118,13 +118,12 @@ public final class Debts {
     /** Everything about your debts: each one's balance, payment, interest and payoff date, plus totals. */
     public DebtSummary summary(LocalDate date) {
         List<Account> debts = accounts.debts();
-        Forecast today = forecasts.on(LocalDate.now());
         Forecast onDate = forecasts.on(date);
         Forecast longRun = forecasts.on(LocalDate.now().plusYears(PAYOFF_SEARCH_YEARS)); // for payoff dates
 
         Integer budgetPaysNow = debtTheBudgetPaysNow(longRun);
         List<DebtSummary.DebtRow> rows = debts.stream()
-                .map(debt -> debtRow(debt, today, onDate, longRun, Objects.equals(debt.id(), budgetPaysNow)))
+                .map(debt -> debtRow(debt, onDate, longRun, Objects.equals(debt.id(), budgetPaysNow)))
                 .toList();
 
         LocalDate debtFree = debtFreeDate(rows);
@@ -149,9 +148,11 @@ public final class Debts {
      * this month's interest is owed × rate ÷ 12, and whatever is left of the
      * payment after that is what actually lowers the balance.
      */
-    private DebtSummary.DebtRow debtRow(Account debt, Forecast today, Forecast onDate, Forecast longRun,
+    private DebtSummary.DebtRow debtRow(Account debt, Forecast onDate, Forecast longRun,
                                         boolean budgetPaysThisNow) {
-        BigDecimal owedToday = today.balanceOf(debt.id());
+        // What you typed in, the same as the RunWay tab. A payment you haven't ticked still counts from today
+        // on (payoff date, owed on a date, the chart), just not here.
+        BigDecimal owedToday = debt.balance();
         // Only the debt the budget is paying right now shows budget money; later ones show up when it's their turn.
         BigDecimal fromBudget = budgetPaysThisNow ? budgetPerMonthToward(debt, longRun) : BigDecimal.ZERO;
         BigDecimal payment = monthlyPaymentToward(debt).add(fromBudget);
