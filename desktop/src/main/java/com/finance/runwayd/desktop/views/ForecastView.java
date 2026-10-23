@@ -43,7 +43,8 @@ import java.util.List;
  * <pre>
  *                                                            [x] Include budget splits
  *   (warning if a balance is old)
- *   ┌ Accounts: balance (click to type your bank's) / updated / low point in the next year ┐
+ *   ┌ Bank accounts: balance (click to type your bank's) / updated / low point in the next year ┐
+ *   ┌ Debts: owed (click to type your statement's) / updated / paid-off date ┐
  *   Total debt: today, debt-free date
  *   ┌ This month: [✓] Oct 1  Store Card  -$340.06  Paid  ...  tick bills off as you pay them ┐
  *   Details for: [account]
@@ -95,6 +96,8 @@ public final class ForecastView extends ScrollPane implements Refreshable {
     private final Label staleWarning = new Label();
     private final Label debtLine = new Label();
     private final TableView<AccountSummary> summaryTable = Tables.create("Add an account on the Accounts tab to get started.");
+    private final TableView<AccountSummary> debtsTable = Tables.create("No credit cards or loans.");
+    private VBox debtsSection; // hidden when there are no cards or loans
     private final TableView<ChecklistItem> checklistTable = Tables.create("Nothing due in this period.");
     private final Label checklistHeading = new Label();
     private final ComboBox<ChecklistRange> checklistRange = new ComboBox<>();
@@ -118,6 +121,7 @@ public final class ForecastView extends ScrollPane implements Refreshable {
 
         // Names the QA tests use to find things (desktop/src/test/.../qa).
         summaryTable.setId("forecastAccounts");
+        debtsTable.setId("forecastDebts");
         checklistTable.setId("checklist");
         ledgerTable.setId("ledger");
         debtLine.setId("debtLine");
@@ -132,12 +136,13 @@ public final class ForecastView extends ScrollPane implements Refreshable {
         HBox detailsBar = new HBox(8, detailsLabel, accountPicker);
         detailsBar.setAlignment(Pos.CENTER_LEFT);
 
-        Label balanceHint = new Label("Tip: click an amount under \"Balance\" to type in what your bank or card statement shows, "
-                + "then press Enter. Cards and loans show as negative because that money is owed.");
+        Label balanceHint = new Label("Tip: click an amount under \"Balance\" or \"Owed\" to type in what your bank or card "
+                + "statement shows, then press Enter.");
         balanceHint.getStyleClass().add("hint");
         debtLine.getStyleClass().add("debt-line");
 
         Tables.sizeToRows(summaryTable, MAX_ACCOUNT_ROWS);
+        Tables.sizeToRows(debtsTable, MAX_ACCOUNT_ROWS);
         Tables.sizeToRows(checklistTable, MAX_CHECKLIST_ROWS);
         ledgerTable.setPrefHeight(320);
 
@@ -145,7 +150,9 @@ public final class ForecastView extends ScrollPane implements Refreshable {
         VBox page = new VBox(12,
                 buildTopBar(),
                 staleWarning,
-                section("Accounts", summaryTable, balanceHint, debtLine),
+                section("Bank accounts", summaryTable),
+                debtsSection = section("Debts", debtsTable, debtLine),
+                balanceHint,
                 checklistSection(),
                 detailsBar,
                 chart,
@@ -189,8 +196,22 @@ public final class ForecastView extends ScrollPane implements Refreshable {
         summaryTable.getColumns().add(Tables.editableMoney("Balance", AccountSummary::balance, this::saveBankBalance));
         summaryTable.getColumns().add(Tables.text("Updated", row -> updatedText(row.account().balanceDate())));
         summaryTable.getColumns().add(Tables.text("Watch out for", AccountSummary::note));
-        // Clicking a row shows that account's details below.
-        summaryTable.getSelectionModel().selectedItemProperty().addListener((obs, oldRow, row) -> {
+        showDetailsOnClick(summaryTable);
+
+        // Cards and loans: what's owed (as a positive amount), when it was updated, and when it's paid off.
+        debtsTable.getColumns().add(Tables.text("Account", row -> row.account().name()));
+        debtsTable.getColumns().add(Tables.link("Website", row -> row.account().website()));
+        debtsTable.getColumns().add(Tables.text("Type", row -> row.account().type().label()));
+        debtsTable.setEditable(true);
+        debtsTable.getColumns().add(Tables.editableMoney("Owed", AccountSummary::balance, this::saveBankBalance));
+        debtsTable.getColumns().add(Tables.text("Updated", row -> updatedText(row.account().balanceDate())));
+        debtsTable.getColumns().add(Tables.text("Paid off", AccountSummary::note));
+        showDetailsOnClick(debtsTable);
+    }
+
+    /** Clicking a row shows that account's details (chart and ledger) below. */
+    private void showDetailsOnClick(TableView<AccountSummary> table) {
+        table.getSelectionModel().selectedItemProperty().addListener((obs, oldRow, row) -> {
             if (row != null) {
                 accountPicker.setValue(row.account());
             }
@@ -344,10 +365,17 @@ public final class ForecastView extends ScrollPane implements Refreshable {
         forecast = service.forecast(date);
         DebtSummary debt = service.debtSummary(date);
 
-        // Every account in one list: checking and savings first, then cards and loans.
+        // Checking and savings in one table, cards and loans in the other.
         summaryTable.getItems().setAll(accounts.stream()
+                .filter(account -> !account.type().isDebt())
                 .map(account -> summaryRow(account, debt))
                 .toList());
+        debtsTable.getItems().setAll(accounts.stream()
+                .filter(account -> account.type().isDebt())
+                .map(account -> summaryRow(account, debt))
+                .toList());
+        debtsSection.setVisible(!debtsTable.getItems().isEmpty());
+        debtsSection.setManaged(!debtsTable.getItems().isEmpty());
         showChecklist();
         showDebtLine(debt);
 
@@ -401,10 +429,10 @@ public final class ForecastView extends ScrollPane implements Refreshable {
                 .filter(row -> row.account().id() == account.id())
                 .findFirst()
                 .map(row -> row.payoffDate() == null
-                        ? "Not paid off with current payments"
-                        : "Paid off " + Format.monthYear(row.payoffDate()))
+                        ? "Not with current payments"
+                        : Format.monthYear(row.payoffDate()))
                 .orElse("");
-        return new AccountSummary(account, account.balance().negate(), note);
+        return new AccountSummary(account, account.balance(), note); // owed, as a positive amount
     }
 
     /** "Total debt: $17,550.00 today, $13,600.00 on Jan 18, 2027. Debt-free: Aug 2029". Hidden with no debts. */

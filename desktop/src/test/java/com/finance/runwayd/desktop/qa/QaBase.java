@@ -497,15 +497,30 @@ abstract class QaBase extends ApplicationTest {
         if (found != null) {
             return found;
         }
-        String balance = forecastCell(account, "Balance");
-        boolean owed = List.of("Credit card", "Loan").contains(forecastCell(account, "Type"));
-        return owed && balance.startsWith("-") ? balance.substring(1) : balance; // owed, like the ledger
+        // Bank accounts show a Balance; cards and loans what's Owed (positive, like the ledger).
+        boolean debt = "forecastDebts".equals(forecastTableFor(account).getId());
+        return forecastCell(account, debt ? "Owed" : "Balance");
     }
 
     /** On the Forecast tab: what the Accounts table shows for an account in a column ("Balance", "Updated", "Watch out for"). */
     String forecastCell(String account, String column) {
+        return cellWhere(forecastTableFor(account), "Account", account, column);
+    }
+
+    /** The Forecast tab's table that lists this account: Bank accounts or Debts. */
+    TableView<?> forecastTableFor(String account) {
         openTab("Forecast");
-        return cellWhere(byId("forecastAccounts"), "Account", account, column);
+        for (String id : List.of("forecastAccounts", "forecastDebts")) {
+            Optional<TableView<?>> table = lookup("#" + id).match(this::isReallyVisible).tryQuery();
+            if (table.isPresent()) {
+                for (int row = 0; row < table.get().getItems().size(); row++) {
+                    if (account.equals(cell(table.get(), row, "Account"))) {
+                        return table.get();
+                    }
+                }
+            }
+        }
+        throw new AssertionError("Neither Forecast table lists " + account);
     }
 
     // -------------------------------------------------------------------------

@@ -51,7 +51,7 @@ class DebtQaTest extends QaBase {
         openTab("Forecast");
         assertTrue(((Label) byId("debtLine")).getText().startsWith("Total debt: " + money("1000") + " today"),
                 ((Label) byId("debtLine")).getText());
-        assertShows("-1000", forecastCell("Store Card", "Balance"), "owed shows as negative on the Forecast tab");
+        assertShows("1000", forecastCell("Store Card", "Owed"), "owed, in the Forecast tab's Debts table");
 
         // Two months on, three payments have been made: tomorrow's and the next two.
         assertShows("4700", balanceOn("Checking", tomorrow.plusMonths(2)), "$5,000 - 3 × $100");
@@ -73,7 +73,7 @@ class DebtQaTest extends QaBase {
         assertEquals(Format.date(tomorrow.plusMonths(4)), cellWhere(debts, "Debt", "Store Card", "Paid off"),
                 "five payments now");
         assertEquals(money("500"), ((Label) byId("debtTotalToday")).getText());
-        assertShows("-500", forecastCell("Store Card", "Balance"), "Forecast tab agrees");
+        assertShows("500", forecastCell("Store Card", "Owed"), "Forecast tab agrees");
         assertEquals(0, new BigDecimal("500").compareTo(reopened().accounts().stream()
                 .filter(a -> a.name().equals("Store Card")).findFirst().orElseThrow().balance()));
     }
