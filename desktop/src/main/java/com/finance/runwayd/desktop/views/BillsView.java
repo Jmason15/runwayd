@@ -328,7 +328,7 @@ public final class BillsView extends BorderPane implements Refreshable {
 
     private void add() {
         if (service.accounts().isEmpty()) {
-            Alerts.info("Add an account on the Accounts tab first, so bills have somewhere to come from.");
+            Alerts.info("Add an account on the RunWay tab first (\"Add account\"), so bills have somewhere to come from.");
             return;
         }
         new ItemDialog(null, service.accounts()).showAndWait().ifPresent(item -> {

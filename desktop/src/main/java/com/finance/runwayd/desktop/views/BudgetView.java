@@ -51,7 +51,7 @@ import java.util.Objects;
  * to keep, counting every bill coming after it (see BudgetPlanner in core for how it's evened out).
  *
  * <p>It saves its own settings and never changes bills or debts. When "Include budget
- * splits" is on (Forecast tab), the forecast plays each paycheck's split in on payday.
+ * splits" is on (RunWay tab), the forecast plays each paycheck's split in on payday.
  */
 public final class BudgetView extends ScrollPane implements Refreshable {
 
@@ -137,7 +137,7 @@ public final class BudgetView extends ScrollPane implements Refreshable {
                 + "with every upcoming bill and debt payment covered. "
                 + "Dollar buckets are filled first, then percent buckets share what's left. "
                 + "\"Goes to\" decides what the money does when the budget is included in the forecast "
-                + "(the switch on the Forecast tab): it's spent, it moves into one of your accounts (e.g. savings, "
+                + "(the switch on the RunWay tab): it's spent, it moves into one of your accounts (e.g. savings, "
                 + "so that balance grows), or it pays down debts: highest interest rate first, "
                 + "or one debt you pick (once that one's paid off, its money stays in checking). "
                 + "Your bills and debts themselves are never changed.");
@@ -285,7 +285,7 @@ public final class BudgetView extends ScrollPane implements Refreshable {
             }
             BigDecimal cushion = Format.parseMoney(cushionField.getText(), "Amount to keep");
             Integer accountId = accountBox.getValue() == null ? null : accountBox.getValue().id();
-            // Keep the Forecast tab's "Include budget splits" switch as it was.
+            // Keep the RunWay tab's "Include budget splits" switch as it was.
             service.saveBudget(new Budget(accountId, cushion, buckets, service.budgetInForecast()));
             editError.setText("");
             showPlan();

@@ -6,6 +6,9 @@ import com.finance.runwayd.core.FinanceService;
 import com.finance.runwayd.core.forecast.Forecast;
 import com.finance.runwayd.core.forecast.LedgerEntry;
 import com.finance.runwayd.core.model.Account;
+import com.finance.runwayd.core.model.AccountType;
+import com.finance.runwayd.desktop.dialogs.AccountDialog;
+import com.finance.runwayd.desktop.ui.Alerts;
 import com.finance.runwayd.desktop.ui.Charts;
 import com.finance.runwayd.desktop.ui.Format;
 import com.finance.runwayd.desktop.Refreshable;
@@ -17,12 +20,14 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
@@ -38,7 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * The main screen: every account's balance, what's coming up, and how low each account gets.
+ * The home screen (the "RunWay" tab): every account's balance, what's coming up, and how low each account gets.
  *
  * <pre>
  *                                                            [x] Include budget splits
@@ -55,6 +60,9 @@ import java.util.List;
  * The page scrolls if the window is too short, so no section ever gets squeezed.
  */
 public final class ForecastView extends ScrollPane implements Refreshable {
+
+    /** The kinds of account added here. Cards and loans are added on the Debt tab. */
+    private static final List<AccountType> BANK_TYPES = List.of(AccountType.CHECKING, AccountType.SAVINGS);
 
     /** Balances older than this get a reminder to update them. */
     private static final int STALE_AFTER_DAYS = 14;
@@ -95,7 +103,7 @@ public final class ForecastView extends ScrollPane implements Refreshable {
     private final CheckBox includeBudget = new CheckBox("Include budget splits");
     private final Label staleWarning = new Label();
     private final Label debtLine = new Label();
-    private final TableView<AccountSummary> summaryTable = Tables.create("Add an account on the Accounts tab to get started.");
+    private final TableView<AccountSummary> summaryTable = Tables.create("No bank accounts yet. Click \"Add account\" to add your checking account.");
     private final TableView<AccountSummary> debtsTable = Tables.create("No credit cards or loans.");
     private VBox debtsSection; // hidden when there are no cards or loans
     private final TableView<ChecklistItem> checklistTable = Tables.create("Nothing due in this period.");
@@ -150,7 +158,7 @@ public final class ForecastView extends ScrollPane implements Refreshable {
         VBox page = new VBox(12,
                 buildTopBar(),
                 staleWarning,
-                section("Bank accounts", summaryTable),
+                bankAccountsSection(),
                 debtsSection = section("Debts", debtsTable, debtLine),
                 balanceHint,
                 checklistSection(),
@@ -187,11 +195,11 @@ public final class ForecastView extends ScrollPane implements Refreshable {
 
     private void buildSummaryTable() {
         summaryTable.getColumns().add(Tables.text("Account", row -> row.account().name()));
-        // Click to check the account online (the website set on the Accounts or Debt tab).
+        // Click to check the account online (the website set on the RunWay or Debt tab).
         summaryTable.getColumns().add(Tables.link("Website", row -> row.account().website()));
         summaryTable.getColumns().add(Tables.text("Type", row -> row.account().type().label()));
-        // The balance as entered (the same as the Accounts tab) and when it was last updated. Typing in the
-        // Balance column saves what the bank shows now, as of today, the same as Update balance.
+        // The balance as entered and when it was last updated. Typing in the
+        // Balance column saves what the bank shows now, as of today.
         summaryTable.setEditable(true);
         summaryTable.getColumns().add(Tables.editableMoney("Balance", AccountSummary::balance, this::saveBankBalance));
         summaryTable.getColumns().add(Tables.text("Updated", row -> updatedText(row.account().balanceDate())));
@@ -209,6 +217,63 @@ public final class ForecastView extends ScrollPane implements Refreshable {
         showDetailsOnClick(debtsTable);
     }
 
+    /**
+     * "Bank accounts" with Add account, Edit and Delete beside it (Edit and Delete for the selected row).
+     * Double-clicking a row opens Edit too. Cards and loans are added and edited on the Debt tab.
+     */
+    private VBox bankAccountsSection() {
+        Label heading = new Label("Bank accounts");
+        heading.getStyleClass().add("heading");
+        Button add = new Button("Add account");
+        Button edit = new Button("Edit");
+        Button delete = new Button("Delete");
+        for (Button needsSelection : new Button[] {edit, delete}) {
+            needsSelection.disableProperty().bind(summaryTable.getSelectionModel().selectedItemProperty().isNull());
+        }
+        add.setOnAction(event -> addAccount());
+        edit.setOnAction(event -> editAccount(summaryTable.getSelectionModel().getSelectedItem().account()));
+        delete.setOnAction(event -> deleteAccount(summaryTable.getSelectionModel().getSelectedItem().account()));
+
+        summaryTable.setRowFactory(table -> {
+            TableRow<AccountSummary> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                // Not while typing a balance: one click on Balance opens it for typing instead.
+                if (event.getClickCount() == 2 && !row.isEmpty() && summaryTable.getEditingCell() == null) {
+                    editAccount(row.getItem().account());
+                }
+            });
+            return row;
+        });
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        HBox header = new HBox(8, heading, spacer, add, edit, delete);
+        header.setAlignment(Pos.CENTER_LEFT);
+        return new VBox(6, header, summaryTable);
+    }
+
+    private void addAccount() {
+        new AccountDialog(null, BANK_TYPES).showAndWait().ifPresent(account -> {
+            service.addAccount(account);
+            refresh();
+        });
+    }
+
+    private void editAccount(Account account) {
+        new AccountDialog(account, BANK_TYPES).showAndWait().ifPresent(changed -> {
+            service.updateAccount(changed);
+            refresh();
+        });
+    }
+
+    private void deleteAccount(Account account) {
+        // FinanceService refuses if a bill still uses this account; App shows its message as a pop-up.
+        if (Alerts.confirm("Delete \"" + account.name() + "\"?")) {
+            service.deleteAccount(account.id());
+            refresh();
+        }
+    }
+
     /** Clicking a row shows that account's details (chart and ledger) below. */
     private void showDetailsOnClick(TableView<AccountSummary> table) {
         table.getSelectionModel().selectedItemProperty().addListener((obs, oldRow, row) -> {
@@ -219,7 +284,7 @@ public final class ForecastView extends ScrollPane implements Refreshable {
     }
 
     /**
-     * Saves what your bank shows right now, the same as Update balance on the Accounts tab. Everything
+     * Saves what your bank shows right now, as of today. Everything
      * on screen is recalculated from it; bills you haven't ticked still count (see the checklist).
      */
     private void saveBankBalance(AccountSummary row, BigDecimal bankBalance) {
@@ -406,7 +471,7 @@ public final class ForecastView extends ScrollPane implements Refreshable {
     }
 
     /**
-     * One row of the Accounts table.
+     * One row of the Bank accounts or Debts table.
      *
      * <p>Debts are shown as negative numbers (shown in red), the way budgeting apps
      * do it, because money you owe counts against you. The account itself still
@@ -418,7 +483,7 @@ public final class ForecastView extends ScrollPane implements Refreshable {
     }
 
     /**
-     * One row. "Balance" is the balance as entered (the same as the Accounts tab), so it matches the bank;
+     * One row. "Balance" is the balance as entered, so it matches the bank;
      * bills not ticked yet show up on the checklist instead (its Balance after starts from this balance).
      */
     private AccountSummary summaryRow(Account account, DebtSummary debt) {

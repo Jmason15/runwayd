@@ -32,7 +32,7 @@ import java.util.Optional;
  * <pre>
  *   accounts/  {@link Accounts}     your accounts and balances
  *   bills/     {@link Bills}        bills, paychecks and transfers; marking them paid
- *              {@link Checklist}    the Forecast tab's "This month" list
+ *              {@link Checklist}    the RunWay tab's "This month" list
  *   debt/      {@link Debts}        how debts are paid; the Debt tab's summary
  *   budget/    {@link BudgetPlans}  the Budget tab: settings, the plan, ticking buckets off
  *   forecast/  {@link Forecasts}    the day-by-day forecast
@@ -185,7 +185,7 @@ public final class FinanceService {
         return bills.undoLastPaid(itemId);
     }
 
-    /** The Forecast tab's "This month" list (see Checklist). */
+    /** The RunWay tab's "This month" list (see Checklist). */
     public List<ChecklistItem> monthChecklist(YearMonth month) {
         return checklist.forMonth(month);
     }

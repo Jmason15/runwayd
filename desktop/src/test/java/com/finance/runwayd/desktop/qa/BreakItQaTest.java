@@ -30,8 +30,8 @@ class BreakItQaTest extends QaBase {
     @Test
     void deletingAnAccountABillStillUsesIsRefusedWithAMessage() {
         addBill("Rent", "900", "Monthly", tomorrow);
-        openTab("Accounts");
-        clickOn(cellNode(byId("accountsTable"), 0, "Name"));
+        openTab("RunWay");
+        clickOn(cellNode(byId("forecastAccounts"), 0, "Account"));
         press("Delete");
         answer(true); // "Delete Checking?"
 
@@ -44,8 +44,8 @@ class BreakItQaTest extends QaBase {
     @Test
     void renamingAnAccountShowsTheNewNameEverywhere() {
         addBill("Rent", "900", "Monthly", tomorrow);
-        openTab("Accounts");
-        clickOn(cellNode(byId("accountsTable"), 0, "Name"));
+        openTab("RunWay");
+        clickOn(cellNode(byId("forecastAccounts"), 0, "Account"));
         press("Edit");
         type("Name", "Joint Checking");
         save();
@@ -76,11 +76,8 @@ class BreakItQaTest extends QaBase {
 
     @Test
     void hugeAndTinyAmountsAddUpToTheCent() {
-        openTab("Accounts");
-        clickOn(cellNode(byId("accountsTable"), 0, "Name"));
-        press("Update balance");
-        type("Balance now", "999,999,999.99");
-        save();
+        openTab("RunWay");
+        typeIntoCell(byId("forecastAccounts"), 0, "Balance", "999,999,999.99");
         addBill("Penny", "0.01", "Monthly", tomorrow);
 
         // Three pennies by two months from tomorrow.
@@ -121,8 +118,8 @@ class BreakItQaTest extends QaBase {
         addBill("Rent", "900", "Monthly", tomorrow);
         byte[] before = Files.readAllBytes(dataFile);
 
-        openTab("Accounts");
-        press("Add");
+        openTab("RunWay");
+        press("Add account");
         type("Name", "Not saved");
         cancel();
         openTab("Debt");
@@ -146,7 +143,7 @@ class BreakItQaTest extends QaBase {
     void switchingTabsBackAndForthKeepsTheSameNumbers() {
         addBill("Rent", "900", "Monthly", tomorrow);
         String first = balanceOn("Checking", tomorrow);
-        for (String tab : List.of("Bills & Income", "Debt", "Budget", "Accounts", "Forecast", "Budget", "Forecast")) {
+        for (String tab : List.of("Bills & Income", "Debt", "Budget", "RunWay", "Budget", "RunWay")) {
             openTab(tab);
         }
         assertEquals(first, balanceOn("Checking", tomorrow));
@@ -156,7 +153,7 @@ class BreakItQaTest extends QaBase {
     @Test
     void deletingATickedBillTakesItOffTheChecklist() {
         addBill("Rent", "900", "One time", tomorrow);
-        openTab("Forecast");
+        openTab("RunWay");
         chooseIn(byId("checklistRange"), "3 months");
         TableView<?> checklist = byId("checklist");
         clickOn(cellNode(checklist, rowWhere(checklist, "What", "Rent"), "Paid").getGraphic());
@@ -167,7 +164,7 @@ class BreakItQaTest extends QaBase {
         key(javafx.scene.input.KeyCode.DELETE);
         answer(true);
 
-        openTab("Forecast");
+        openTab("RunWay");
         List<String> names = ((TableView<?>) byId("checklist")).getItems().stream()
                 .map(item -> ((com.finance.runwayd.core.bills.ChecklistItem) item).name()).toList();
         assertFalse(names.contains("Rent"), names.toString());

@@ -32,12 +32,12 @@ class ChecklistQaTest extends QaBase {
     @Test
     void anUntickedBillCountsUntilTickedEvenAfterABalanceUpdate() {
         addBill("Groceries", "200", "One time", threeDaysAgo);
-        openTab("Forecast");
+        openTab("RunWay");
 
         assertEquals("[ ]", checklistCell("Groceries", "Paid"));
         assertEquals("Overdue", checklistCell("Groceries", "Status"));
         assertShows("1800", checklistCell("Groceries", "Balance after"), "$2,000 - $200");
-        assertShows("2000", forecastCell("Checking", "Balance"), "Today is what's in the bank, like the Accounts tab");
+        assertShows("2000", forecastCell("Checking", "Balance"), "Balance is what's in the bank");
         assertShows("1800", balanceOn("Checking", today), "the bill still counts in the forecast");
 
         // The bank says $1,900 now. The bill isn't ticked, so it still counts: 1,900 - 200.
@@ -47,8 +47,8 @@ class ChecklistQaTest extends QaBase {
         assertShows("1700", balanceOn("Checking", today), "a balance update doesn't tick anything");
         assertEquals("[ ]", checklistCell("Groceries", "Paid"), "nobody ticked it");
         assertEquals("Overdue", checklistCell("Groceries", "Status"));
-        openTab("Accounts");
-        assertShows("1900", cellWhere(byId("accountsTable"), "Name", "Checking", "Balance"), "what the bank said");
+        assertShows("1900", forecastCell("Checking", "Balance"), "what the bank said, saved to the account");
+        assertEquals(0, new BigDecimal("1900").compareTo(reopened().accounts().get(0).balance()));
 
         // Tick it: it stops counting. Untick it: it's back.
         tick("Groceries");
@@ -69,7 +69,7 @@ class ChecklistQaTest extends QaBase {
         addBill("Rent", "500", "One time", tomorrow);
         addBill("Phone", "50", "One time", tomorrow);
         addItem("Income", "Pay", "1000", "One time", tomorrow, "Checking");
-        openTab("Forecast");
+        openTab("RunWay");
         chooseIn(byId("checklistRange"), "3 months"); // tomorrow may be next month
 
         TableView<?> checklist = byId("checklist");
@@ -92,13 +92,13 @@ class ChecklistQaTest extends QaBase {
     // ---- helpers ----
 
     private String checklistCell(String what, String column) {
-        openTab("Forecast");
+        openTab("RunWay");
         return cellWhere(byId("checklist"), "What", what, column);
     }
 
     /** Clicks the tick box on that line. */
     private void tick(String what) {
-        openTab("Forecast");
+        openTab("RunWay");
         TableView<?> checklist = byId("checklist");
         CheckBox box = (CheckBox) cellNode(checklist, rowWhere(checklist, "What", what), "Paid").getGraphic();
         clickOn(box);

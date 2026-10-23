@@ -10,11 +10,10 @@ See how much money each account will have as every bill and paycheck comes and g
 
 | Tab | What it's for |
 |---|---|
-| **Forecast** | Every account's balance and its low point over the next year, a chart, the full day-by-day ledger, and a checklist (this month, or up to a year ahead) to tick bills and budget transfers off |
+| **RunWay** (home) | Your bank accounts (add, edit, delete, type in balances) and debts, each account's balance and its low point over the next year, a chart, the full day-by-day ledger, and a checklist (this month, or up to a year ahead) to tick bills and budget transfers off |
 | **Bills & Income** | Paychecks, bills and transfers grouped by category, with search, filters, totals per month and year, and Mark paid / Undo |
 | **Debt** | What you owe, interest vs. principal, payoff dates, debt-free date, and the snowball rollover |
 | **Budget** | Splits each paycheck into buckets (spent, into an account, or paying down debt) while never letting checking drop below the amount you keep |
-| **Accounts** | Checking and savings accounts and their balances |
 
 Several separate **budgets** (each a complete set of accounts, bills and splits) can be kept and switched at the top of the window. A budget can be **shared** through a synced folder (iCloud Drive, Dropbox…) so two computers use the same one and see each other's changes within seconds, or exported as a copy to send to someone.
 
@@ -45,7 +44,7 @@ core/         BACKEND: plain Java, no UI
   Workspace          the open budget's data in memory; saves after every change
   accounts/          Accounts: your accounts and balances
   bills/             Bills: bills, paychecks, transfers, mark paid / undo
-                     Checklist, ChecklistItem: the Forecast tab's "This month" list
+                     Checklist, ChecklistItem: the RunWay tab's "This month" list
   debt/              Debts, DebtSummary: how debts are paid and the Debt tab's numbers
                      LoanCalculator: the standard loan payment formula
   budget/            BudgetPlans: the Budget tab's settings, plan and moves

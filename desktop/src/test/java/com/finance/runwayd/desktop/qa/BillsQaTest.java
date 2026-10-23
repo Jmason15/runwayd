@@ -213,7 +213,7 @@ class BillsQaTest extends QaBase {
         save();
 
         assertEquals("myelectric.com", cell(onlyBillTable(), 0, "Website"));
-        openTab("Forecast");
+        openTab("RunWay");
         assertEquals("myelectric.com", cellWhere(byId("checklist"), "What", "Electric", "Website"));
         assertEquals("https://www.myelectric.com/pay", reopened().items().get(0).website());
     }

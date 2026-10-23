@@ -48,7 +48,7 @@ class DebtQaTest extends QaBase {
         assertEquals(Format.monthYear(lastPayment), ((Label) byId("debtFree")).getText());
         assertEquals(money("1000"), ((Label) byId("debtTotalToday")).getText());
 
-        openTab("Forecast");
+        openTab("RunWay");
         assertTrue(((Label) byId("debtLine")).getText().startsWith("Total debt: " + money("1000") + " today"),
                 ((Label) byId("debtLine")).getText());
         assertShows("1000", forecastCell("Store Card", "Owed"), "owed, in the Forecast tab's Debts table");

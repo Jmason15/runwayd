@@ -64,7 +64,7 @@ public final class App extends Application {
                 window.refreshCurrentTab();
             }
         });
-        // Lets website links on the Debt and Accounts tabs open in your normal browser.
+        // Lets website links on the RunWay and Debt tabs open in your normal browser.
         Browser.init(getHostServices());
         // Dark ("Night runway") unless you've switched it off before on this computer.
         Theme.setDark(library.darkMode().orElse(true));

@@ -142,7 +142,7 @@ abstract class QaBase extends ApplicationTest {
     // Getting around
     // -------------------------------------------------------------------------
 
-    /** Clicks a tab: "Forecast", "Bills & Income", "Debt", "Budget" or "Accounts". */
+    /** Clicks a tab: "RunWay", "Bills & Income", "Debt" or "Budget". */
     void openTab(String name) {
         clickOn(lookup(".tab-label").match((Labeled label) -> name.equals(label.getText())).<Node>query());
         settle();
@@ -441,10 +441,10 @@ abstract class QaBase extends ApplicationTest {
     // Common steps, done by clicking
     // -------------------------------------------------------------------------
 
-    /** Adds a checking account on the Accounts tab, balance as of today. */
+    /** Adds a checking account on the RunWay tab ("Add account"), balance as of today. */
     void addAccount(String name, String balance) {
-        openTab("Accounts");
-        press("Add");
+        openTab("RunWay");
+        press("Add account");
         type("Name", name);
         type("Balance", balance);
         save();
@@ -484,7 +484,7 @@ abstract class QaBase extends ApplicationTest {
      * Balance. Cards and loans read as owed (positive), the way the ledger shows them.
      */
     String balanceOn(String account, LocalDate date) {
-        openTab("Forecast");
+        openTab("RunWay");
         chooseIn(byId("detailsAccount"), account);
         TableView<?> ledger = byId("ledger");
         String found = null;
@@ -502,14 +502,14 @@ abstract class QaBase extends ApplicationTest {
         return forecastCell(account, debt ? "Owed" : "Balance");
     }
 
-    /** On the Forecast tab: what the Accounts table shows for an account in a column ("Balance", "Updated", "Watch out for"). */
+    /** On the RunWay tab: what the Bank accounts or Debts table shows for an account in a column ("Balance", "Updated", "Watch out for"). */
     String forecastCell(String account, String column) {
         return cellWhere(forecastTableFor(account), "Account", account, column);
     }
 
     /** The Forecast tab's table that lists this account: Bank accounts or Debts. */
     TableView<?> forecastTableFor(String account) {
-        openTab("Forecast");
+        openTab("RunWay");
         for (String id : List.of("forecastAccounts", "forecastDebts")) {
             Optional<TableView<?>> table = lookup("#" + id).match(this::isReallyVisible).tryQuery();
             if (table.isPresent()) {

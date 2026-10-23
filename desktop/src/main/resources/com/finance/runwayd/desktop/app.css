@@ -126,7 +126,7 @@
     -fx-font-weight: bold;
 }
 
-/* The "Total debt: ..." line on the Forecast tab. */
+/* The "Total debt: ..." line on the RunWay tab. */
 .debt-line {
     -fx-font-weight: bold;
     -fx-text-fill: #a32d2d;

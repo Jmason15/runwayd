@@ -38,7 +38,7 @@ public final class AccountDialog extends FormDialog<Account> {
 
     /**
      * @param existing the account to edit, or null to add a new one
-     * @param types    the account types to offer, e.g. just checking and savings on the Accounts tab
+     * @param types    the account types to offer, e.g. just checking and savings on the RunWay tab
      */
     public AccountDialog(Account existing, List<AccountType> types) {
         super(existing == null ? "Add account" : "Edit " + existing.name());

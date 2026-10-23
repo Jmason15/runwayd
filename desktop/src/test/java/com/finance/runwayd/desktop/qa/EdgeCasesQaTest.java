@@ -20,7 +20,7 @@ class EdgeCasesQaTest extends QaBase {
 
     @Test
     void aBrandNewEmptyBudgetOpensEveryTabWithoutAnError() {
-        for (String tab : List.of("Forecast", "Bills & Income", "Debt", "Budget", "Accounts", "Forecast")) {
+        for (String tab : List.of("RunWay", "Bills & Income", "Debt", "Budget", "RunWay")) {
             openTab(tab);
             assertTrue(popUp().isEmpty(), tab + " shouldn't pop up an error on an empty budget: "
                     + popUp().map(p -> p.getContentText()).orElse(""));
@@ -28,7 +28,7 @@ class EdgeCasesQaTest extends QaBase {
         // Adding a bill before any account explains what to do first.
         openTab("Bills & Income");
         press("Add");
-        assertTrue(popUpText().contains("Accounts tab"), popUpText());
+        assertTrue(popUpText().contains("RunWay tab"), popUpText());
         answer(true);
         assertTrue(reopened().items().isEmpty());
     }

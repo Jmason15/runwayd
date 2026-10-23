@@ -16,7 +16,7 @@ import java.util.Map;
  * @param includeInForecast true to show each paycheck's split in the forecast (money leaving checking, and
  *                          the debt bucket paying down debts). Missing in older data files; then true
  * @param bucketsDoneThrough for each bucket (by name), the last payday whose share you've moved: ticked off
- *                          on the Forecast tab's "This month" list, so the forecast doesn't take it out
+ *                          on the RunWay tab's "This month" list, so the forecast doesn't take it out
  *                          again. A bucket that isn't listed has nothing ticked yet
  */
 public record Budget(Integer cushionAccountId, BigDecimal cushion, List<BudgetBucket> buckets,

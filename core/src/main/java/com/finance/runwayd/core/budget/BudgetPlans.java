@@ -125,12 +125,12 @@ public final class BudgetPlans {
         return accounts.firstChecking();
     }
 
-    /** True if the budget's splits are part of the forecast (the checkbox on the Forecast tab). */
+    /** True if the budget's splits are part of the forecast (the checkbox on the RunWay tab). */
     public boolean inForecast() {
         return workspace.budget().includeInForecast();
     }
 
-    /** Turns the budget's forecast switch on or off (the checkbox on the Forecast tab). */
+    /** Turns the budget's forecast switch on or off (the checkbox on the RunWay tab). */
     public void setInForecast(boolean include) {
         workspace.setBudget(workspace.budget().withIncludeInForecast(include));
         workspace.save();

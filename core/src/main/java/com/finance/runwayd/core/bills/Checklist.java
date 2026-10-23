@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * The Forecast tab's checklist ("This month", or up to a year ahead): every bill and paycheck due, each budget
+ * The RunWay tab's checklist ("This month", or up to a year ahead): every bill and paycheck due, each budget
  * bucket's share of each payday, and anything from earlier still not ticked off.
  */
 public final class Checklist {

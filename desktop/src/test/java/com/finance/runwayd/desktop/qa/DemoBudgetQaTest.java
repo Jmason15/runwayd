@@ -33,7 +33,7 @@ class DemoBudgetQaTest extends QaBase {
 
     @Test
     void aYearOfTheChecklistReadsAsARunningBalance() {
-        openTab("Forecast");
+        openTab("RunWay");
         chooseIn(byId("checklistRange"), "1 year");
         TableView<?> checklist = byId("checklist");
 
@@ -75,7 +75,7 @@ class DemoBudgetQaTest extends QaBase {
         String total = ((Label) byId("debtTotalToday")).getText();
         assertEquals(sum, amountShown(total), "Total debt today is the sum of the rows");
 
-        openTab("Forecast");
+        openTab("RunWay");
         String debtLine = ((Label) byId("debtLine")).getText();
         assertTrue(debtLine.startsWith("Total debt: " + total + " today"), debtLine);
     }

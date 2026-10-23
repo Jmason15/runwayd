@@ -1,7 +1,6 @@
 package com.finance.runwayd.desktop;
 
 import com.finance.runwayd.core.FinanceService;
-import com.finance.runwayd.desktop.views.AccountsView;
 import com.finance.runwayd.desktop.views.BillsView;
 import com.finance.runwayd.desktop.views.BudgetView;
 import com.finance.runwayd.desktop.views.DebtView;
@@ -19,7 +18,7 @@ import java.nio.file.Path;
  * The window's layout: five tabs, plus a status line showing where your data is saved.
  *
  * <pre>
- *   [ Forecast ] [ Bills &amp; Income ] [ Debt ] [ Budget ] [ Accounts ]
+ *   [ RunWay ] [ Bills &amp; Income ] [ Debt ] [ Budget ]
  *   ...the selected screen...
  *   Data saved in: ~/runwayd/budgets/My budget.json
  * </pre>
@@ -44,11 +43,10 @@ public final class MainWindow extends BorderPane {
         this.demo = demo;
         this.savedIn = (shared ? "Shared budget, saved in: " : "Data saved in: ") + dataFile;
         tabs = new TabPane(
-                tab("Forecast", new ForecastView(service)),
+                tab("RunWay", new ForecastView(service)),
                 tab("Bills & Income", new BillsView(service)),
                 tab("Debt", new DebtView(service)),
-                tab("Budget", new BudgetView(service)),
-                tab("Accounts", new AccountsView(service)));
+                tab("Budget", new BudgetView(service)));
 
         // Reload a screen every time you switch to it, so it shows the latest changes.
         tabs.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
@@ -82,7 +80,7 @@ public final class MainWindow extends BorderPane {
                     + "real, and nothing you change here touches your own budgets. Switch back with \"Budget:\" "
                     + "above, or remove it with Budget → Delete.";
         } else if (service.accounts().isEmpty()) {
-            text = "This budget is empty. Start on the Accounts tab: add your checking account and today's "
+            text = "This budget is empty. Start on the RunWay tab: click \"Add account\" for your checking account and today's "
                     + "balance, then your bills on Bills & Income. Want to look around first? "
                     + "Budget → Open the demo budget.";
         }
