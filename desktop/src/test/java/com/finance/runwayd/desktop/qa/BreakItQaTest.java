@@ -111,7 +111,7 @@ class BreakItQaTest extends QaBase {
     void goingBelowZeroIsCalledOut() {
         addBill("Rent", "900", "Monthly", tomorrow);
 
-        // Three rents of $900 out of $2,000 within the next 3 months.
+        // Three rents of $900 out of $2,000 within the next year.
         assertShows("-700", balanceOn("Checking", tomorrow.plusMonths(2)), "$2,000 - 3 × $900");
         assertTrue(forecastCell("Checking", "Watch out for").startsWith("OVERDRAWN"));
     }

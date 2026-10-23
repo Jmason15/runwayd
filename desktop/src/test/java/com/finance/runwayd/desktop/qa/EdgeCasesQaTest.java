@@ -106,7 +106,7 @@ class EdgeCasesQaTest extends QaBase {
         assertShows("24", cellWhere(debts, "Debt", "Visa", "Interest / mo"), "1,200 × 24% ÷ 12");
 
         // The Debt tab's "Owed on date" and the Forecast tab must agree on the same day.
-        LocalDate inTwoMonths = today.plusMonths(2); // the Forecast tab looks 3 months ahead
+        LocalDate inTwoMonths = today.plusMonths(2);
         DatePicker debtDate = lookup(".date-picker").match(this::isReallyVisible).query();
         clickOn(debtDate.getEditor());
         interact(() -> debtDate.getEditor().selectAll());

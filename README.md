@@ -10,7 +10,7 @@ See how much money each account will have as every bill and paycheck comes and g
 
 | Tab | What it's for |
 |---|---|
-| **Forecast** | Every account's balance and its low point over the next 3 months, a chart, the full day-by-day ledger, and a checklist (this month, or up to a year ahead) to tick bills and budget transfers off |
+| **Forecast** | Every account's balance and its low point over the next year, a chart, the full day-by-day ledger, and a checklist (this month, or up to a year ahead) to tick bills and budget transfers off |
 | **Bills & Income** | Paychecks, bills and transfers grouped by category, with search, filters, totals per month and year, and Mark paid / Undo |
 | **Debt** | What you owe, interest vs. principal, payoff dates, debt-free date, and the snowball rollover |
 | **Budget** | Splits each paycheck into buckets (spent, into an account, or paying down debt) while never letting checking drop below the amount you keep |

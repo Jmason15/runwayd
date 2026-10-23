@@ -43,7 +43,7 @@ import java.util.List;
  * <pre>
  *                                                            [x] Include budget splits
  *   (warning if a balance is old)
- *   ┌ Accounts: balance (click to type your bank's) / updated / low point in the next 3 months ┐
+ *   ┌ Accounts: balance (click to type your bank's) / updated / low point in the next year ┐
  *   Total debt: today, debt-free date
  *   ┌ This month: [✓] Oct 1  Store Card  -$340.06  Paid  ...  tick bills off as you pay them ┐
  *   Details for: [account]
@@ -89,7 +89,7 @@ public final class ForecastView extends ScrollPane implements Refreshable {
     private final FinanceService service;
 
     /** How far ahead the low-point warning, the chart and the ledger look. */
-    private static final int LOOK_AHEAD_MONTHS = 3;
+    private static final int LOOK_AHEAD_MONTHS = 12;
 
     private final CheckBox includeBudget = new CheckBox("Include budget splits");
     private final Label staleWarning = new Label();

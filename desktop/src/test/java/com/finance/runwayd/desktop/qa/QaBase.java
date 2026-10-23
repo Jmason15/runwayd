@@ -478,7 +478,7 @@ abstract class QaBase extends ApplicationTest {
     }
 
     /**
-     * What the forecast says an account holds at the end of {@code date} (within the next 3 months), read
+     * What the forecast says an account holds at the end of {@code date} (within the next year), read
      * off the Forecast tab like a person would: pick the account under "Details for" and take the running
      * balance from the last ledger line on or before that day. With nothing before it, the account's
      * Balance. Cards and loans read as owed (positive), the way the ledger shows them.
