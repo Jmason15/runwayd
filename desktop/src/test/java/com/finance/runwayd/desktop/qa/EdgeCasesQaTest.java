@@ -1,6 +1,5 @@
 package com.finance.runwayd.desktop.qa;
 
-import javafx.scene.control.DatePicker;
 import javafx.scene.control.TableView;
 import javafx.scene.input.KeyCode;
 import org.junit.jupiter.api.Test;
@@ -92,7 +91,7 @@ class EdgeCasesQaTest extends QaBase {
     }
 
     @Test
-    void cardInterestAgreesBetweenTheDebtAndForecastTabs() {
+    void cardInterestIsChargedMonthlyInTheForecast() {
         addAccount("Checking", "5000");
         openTab("Debt");
         press("Add debt");
@@ -105,17 +104,8 @@ class EdgeCasesQaTest extends QaBase {
         TableView<?> debts = byId("debtTable");
         assertShows("24", cellWhere(debts, "Debt", "Visa", "Interest / mo"), "1,200 × 24% ÷ 12");
 
-        // The Debt tab's "Owed on date" and the Forecast tab must agree on the same day.
-        LocalDate inTwoMonths = today.plusMonths(2);
-        DatePicker debtDate = lookup(".date-picker").match(this::isReallyVisible).query();
-        clickOn(debtDate.getEditor());
-        interact(() -> debtDate.getEditor().selectAll());
-        write(debtDate.getConverter().toString(inTwoMonths), 0);
-        key(KeyCode.ENTER);
-        String owedThen = cellWhere(byId("debtTable"), "Debt", "Visa", "Owed on date");
-        assertTrue(amountShown(owedThen).compareTo(new BigDecimal("1200")) > 0, "interest adds up: " + owedThen);
-
-        assertEquals(amountShown(owedThen), amountShown(balanceOn("Visa", inTwoMonths)),
-                "the Forecast tab's ledger shows the same amount owed");
+        // Two months on, interest has been added on the 1st twice: 1,200 × 1.02 = 1,224, then × 1.02 again.
+        assertShows("1248.48", balanceOn("Visa", today.plusMonths(2)), "owed after two months of interest");
+        assertShows("1200", cellWhere(byId("debtTable"), "Debt", "Visa", "Owed today"), "today: what was typed");
     }
 }

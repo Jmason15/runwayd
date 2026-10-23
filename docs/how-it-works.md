@@ -63,7 +63,7 @@ A bill shows as **Overdue** if its date has passed and it isn't ticked. It count
 
 ## Debt
 
-The **Debt** tab shows how much you owe in total, today and on any date you pick, plus your **debt-free date** and a **stacked chart**: one colored band per debt from today until you're debt-free. Bands drop off the top in the order debts are paid off, and the top edge is your total. Each credit card or loan shows its balance, rate, monthly payment and payoff date.
+The **Debt** tab shows how much you owe in total today, plus your **debt-free date** and a **stacked chart**: one colored band per debt from today until you're debt-free. Bands drop off the top in the order debts are paid off, and the top edge is your total. Each credit card or loan shows its balance, rate, monthly payment and payoff date.
 
 - **Add debt** asks for the name, the amount owed, an optional interest rate and how it's paid. By default it **sets up the payment for you**: a card pays its minimum, and for a loan you type **Payments left** (from your lender) and the monthly amount is calculated with the standard loan formula. You can also pick one of your existing bills (e.g. "Store Card") so it isn't entered twice, or choose no payment for now.
 - A debt with no payment shows **Set up…** in the Payment column; click it to set one up the same way.

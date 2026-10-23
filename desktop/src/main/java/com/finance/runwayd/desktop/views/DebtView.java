@@ -30,7 +30,6 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.DatePicker;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
@@ -58,9 +57,9 @@ import java.util.Map;
  * How much debt you're in, and when it'll be gone.
  *
  * <pre>
- *   Total debt today    On [date]       Debt-free     Interest this month
- *   $17,550.00          $13,600.00      Nov 2027      $139.02
- *                                                     $723.69 goes to principal
+ *   Total debt today    Debt-free     Interest this month
+ *   $17,550.00          Nov 2027      $139.02
+ *                                     $723.69 goes to principal
  *
  *   [Add debt]
  *   Debt      Website    Owed today  Rate    Payment           Payment / mo  From budget  Interest  Principal  ...
@@ -79,9 +78,7 @@ public final class DebtView extends ScrollPane implements Refreshable {
 
     private final FinanceService service;
 
-    private final DatePicker datePicker = new DatePicker(LocalDate.now().plusYears(1));
     private final Label totalTodayLabel = statValue();
-    private final Label totalOnDateLabel = statValue();
     private final Label debtFreeLabel = statValue();
     private final Label interestLabel = statValue();
     private final Label principalLabel = new Label();
@@ -97,7 +94,6 @@ public final class DebtView extends ScrollPane implements Refreshable {
         // Names the QA tests use to find things.
         table.setId("debtTable");
         totalTodayLabel.setId("debtTotalToday");
-        totalOnDateLabel.setId("debtTotalOnDate");
         debtFreeLabel.setId("debtFree");
         rollOver.setId("rollOver");
 
@@ -132,7 +128,6 @@ public final class DebtView extends ScrollPane implements Refreshable {
         setContent(page);
         setFitToWidth(true);
 
-        datePicker.valueProperty().addListener((obs, oldDate, newDate) -> refresh());
     }
 
     // -------------------------------------------------------------------------
@@ -143,7 +138,6 @@ public final class DebtView extends ScrollPane implements Refreshable {
     private HBox buildStats() {
         HBox stats = new HBox(16,
                 statCard(new Label("Total debt today"), totalTodayLabel),
-                statCard(new HBox(8, new Label("On"), datePicker), totalOnDateLabel),
                 statCard(new Label("Debt-free"), debtFreeLabel),
                 statCard(new Label("Interest this month"), interestLabel, principalLabel));
         stats.getChildren().forEach(card -> HBox.setHgrow(card, Priority.ALWAYS));
@@ -192,7 +186,6 @@ public final class DebtView extends ScrollPane implements Refreshable {
         table.getColumns().add(Tables.text("Paid off", row -> row.payoffDate() == null
                 ? "Not paid off" : Format.date(row.payoffDate())));
         table.getColumns().add(Tables.money("Total interest", DebtRow::interestUntilPaidOff));
-        table.getColumns().add(Tables.money("Owed on date", DebtRow::owedOnDate));
 
         table.setRowFactory(t -> debtRow());
     }
@@ -283,11 +276,9 @@ public final class DebtView extends ScrollPane implements Refreshable {
     @Override
     public void refresh() {
         rollOver.setSelected(service.rollsPaidOffPayments());
-        LocalDate date = datePicker.getValue() != null ? datePicker.getValue() : LocalDate.now();
-        DebtSummary summary = service.debtSummary(date);
+        DebtSummary summary = service.debtSummary(LocalDate.now());
 
         totalTodayLabel.setText(Format.money(summary.totalToday()));
-        totalOnDateLabel.setText(Format.money(summary.totalOnDate()));
         interestLabel.setText(Format.money(summary.interestPerMonth()));
         principalLabel.setText(Format.money(summary.principalPerMonth()) + " of your payments goes to principal");
         if (summary.debts().isEmpty()) {
