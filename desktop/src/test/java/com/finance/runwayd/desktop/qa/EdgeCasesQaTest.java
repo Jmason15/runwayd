@@ -106,6 +106,7 @@ class EdgeCasesQaTest extends QaBase {
 
         // Two months on, interest has been added on the 1st twice: 1,200 × 1.02 = 1,224, then × 1.02 again.
         assertShows("1248.48", balanceOn("Visa", today.plusMonths(2)), "owed after two months of interest");
+        openTab("Debt");
         assertShows("1200", cellWhere(byId("debtTable"), "Debt", "Visa", "Owed today"), "today: what was typed");
     }
 }
